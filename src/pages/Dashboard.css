@@ -1,0 +1,235 @@
+.dashboard {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.page-header {
+  margin-bottom: 1.5rem;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.page-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+  margin-top: 0.25rem;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-group {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 0.5rem 0.875rem;
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-600);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray-300);
+  transition: all 0.15s;
+}
+
+.filter-btn:hover {
+  background-color: var(--color-gray-50);
+  border-color: var(--color-gray-400);
+}
+
+.filter-btn-active {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  border-color: var(--color-primary);
+}
+
+.filter-btn-active:hover {
+  background-color: var(--color-primary-dark);
+}
+
+.filter-dates {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.filter-date-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid var(--color-gray-300);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  color: var(--color-gray-900);
+  background-color: var(--color-white);
+}
+
+.filter-date-input:focus {
+  outline: none;
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-primary-light);
+}
+
+.filter-date-sep {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.stat-card .card-body {
+  padding: 1.25rem;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--color-gray-900);
+}
+
+.stat-card.text-success .stat-value {
+  color: var(--color-success);
+}
+
+.stat-card.text-danger .stat-value {
+  color: var(--color-danger);
+}
+
+.stat-card.text-muted .stat-value {
+  color: var(--color-gray-500);
+}
+
+.mt-6 {
+  margin-top: 1.5rem;
+}
+
+.table-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.pl-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.pl-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.625rem 0;
+}
+
+.pl-label {
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
+}
+
+.pl-value {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+  font-variant-numeric: tabular-nums;
+}
+
+.pl-sales {
+  color: var(--color-success);
+}
+
+.pl-purchases {
+  color: var(--color-danger);
+}
+
+.pl-expenses {
+  color: var(--color-warning);
+}
+
+.pl-divider {
+  height: 1px;
+  background-color: var(--color-gray-200);
+  margin: 0.25rem 0;
+}
+
+.pl-total {
+  padding-top: 0.75rem;
+}
+
+.pl-total .pl-label {
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.pl-total .pl-value {
+  font-size: 1.125rem;
+}
+
+.pl-total.text-success .pl-value {
+  color: var(--color-success);
+}
+
+.pl-total.text-danger .pl-value {
+  color: var(--color-danger);
+}
+
+.pl-total.text-muted .pl-value {
+  color: var(--color-gray-500);
+}
+
+.pl-badge {
+  display: inline-flex;
+  align-self: flex-end;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.pl-badge.text-success {
+  background-color: var(--color-success-light);
+  color: #15803d;
+}
+
+.pl-badge.text-danger {
+  background-color: var(--color-danger-light);
+  color: #991b1b;
+}
+
+.pl-badge.text-muted {
+  background-color: var(--color-gray-100);
+  color: var(--color-gray-600);
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-dates {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .filter-date-sep {
+    text-align: center;
+  }
+}
