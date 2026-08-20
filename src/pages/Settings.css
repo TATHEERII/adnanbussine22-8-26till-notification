@@ -11,3 +11,44 @@
   padding-top: 1.5rem;
   border-top: 1px solid var(--color-gray-200);
 }
+
+.approval-settings {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.approval-setting-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-gray-200);
+}
+
+.approval-setting-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-700);
+}
+
+.approval-note {
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+  margin-top: 0.75rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 768px) {
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .approval-setting-item {
+    flex-direction: column;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+}

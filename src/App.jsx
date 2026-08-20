@@ -16,7 +16,7 @@ import Settings from './pages/Settings'
 import { useState, useEffect } from 'react'
 import { currentUser, mockUsers } from './data/mockData'
 
-const STORAGE_KEY = 'importbiz_auth_user'
+const STORAGE_KEY = 'importbiz_v2_auth_user'
 
 function getStoredUser() {
   try {

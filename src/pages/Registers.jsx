@@ -49,7 +49,7 @@ const statusVariant = (status) => {
 }
 
 export default function Registers() {
-  const [registers, setRegisters] = useLocalStorageState('importbiz_registers', mockRegisters)
+  const [registers, setRegisters] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)

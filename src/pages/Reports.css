@@ -1,22 +1,189 @@
 .reports-page {
-  max-width: 1200px;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.reports-grid {
+.reports-tabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid var(--color-gray-200);
+  overflow-x: auto;
+}
+
+.reports-tab {
+  padding: 0.75rem 1.25rem;
+  border: none;
+  background: none;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--color-gray-500);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  white-space: nowrap;
+  transition: all 0.15s;
+}
+
+.reports-tab:hover {
+  color: var(--color-gray-700);
+}
+
+.reports-tab-active {
+  color: var(--color-primary);
+  border-bottom-color: var(--color-primary);
+}
+
+.reports-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.reports-filter {
+  width: 180px;
+}
+
+.report-amount {
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-sales {
+  color: #166534;
+}
+
+.report-purchase {
+  color: #991b1b;
+}
+
+.report-expense {
+  color: #92400e;
+}
+
+.profit-loss-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.profit-loss-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   gap: 1rem;
 }
 
-.report-actions {
-  margin-top: 1rem;
+.profit-loss-card {
+  padding: 1.25rem;
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-gray-200);
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.profit-loss-label {
+  font-size: 0.875rem;
+  color: var(--color-gray-500);
+  font-weight: 500;
+}
+
+.profit-loss-value {
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.profit-loss-sales {
+  color: #166534;
+}
+
+.profit-loss-purchase {
+  color: #991b1b;
+}
+
+.profit-loss-expense {
+  color: #92400e;
+}
+
+.profit-loss-result {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem;
+  background-color: var(--color-primary-light);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-primary-light);
+}
+
+.profit-loss-result-label {
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.profit-loss-result-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.profit-loss-profit {
+  color: #166534;
+}
+
+.profit-loss-loss {
+  color: #991b1b;
+}
+
+.profit-loss-formula {
+  padding: 1rem;
+  background-color: var(--color-gray-50);
+  border-radius: var(--radius);
+  border: 1px solid var(--color-gray-200);
+}
+
+.profit-loss-formula-text {
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
+  line-height: 1.6;
 }
 
 @media (max-width: 768px) {
-  .reports-grid {
-    grid-template-columns: 1fr;
+  .reports-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .reports-filter {
+    width: 100%;
+  }
+  .profit-loss-result {
+    flex-direction: column;
+    gap: 0.5rem;
+    text-align: center;
+  }
+}
+
+@media print {
+  .page-header,
+  .reports-toolbar,
+  .reports-tabs,
+  .card-actions {
+    display: none !important;
+  }
+
+  .reports-page {
+    max-width: none;
+  }
+
+  .card {
+    box-shadow: none;
+    border: 1px solid var(--color-gray-300);
+  }
+
+  .profit-loss-card {
+    background-color: #fff;
+    border: 1px solid var(--color-gray-300);
   }
 }

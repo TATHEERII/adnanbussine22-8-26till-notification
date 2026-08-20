@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Table from '../components/ui/Table'
-import { mockTransactions, mockRegisters, mockApprovals } from '../data/mockData'
+import { mockRegisters, mockApprovals } from '../data/mockData'
+import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import './Dashboard.css'
 
 const toLocalDate = (date) => {
@@ -64,6 +65,45 @@ export default function Dashboard() {
   const [customStart, setCustomStart] = useState(todayStr)
   const [customEnd, setCustomEnd] = useState(todayStr)
 
+  const [registers, setRegisters] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
+  const [purchases, setPurchases] = useLocalStorageState('importbiz_v2_purchases', [])
+  const [sales, setSales] = useLocalStorageState('importbiz_v2_sales', [])
+  const [expenses, setExpenses] = useLocalStorageState('importbiz_v2_expenses', [])
+  const [payments, setPayments] = useLocalStorageState('importbiz_v2_payments', [])
+  const [approvals, setApprovals] = useLocalStorageState('importbiz_v2_approvals', mockApprovals)
+
+  const safeArray = (val) => (Array.isArray(val) ? val : [])
+
+  const transactions = useMemo(() => {
+    const txs = []
+
+    safeArray(purchases).forEach((p) => {
+      if (p.status === 'approved') {
+        txs.push({ id: p.id, date: p.date, register: p.register, type: 'Purchase', description: p.description || p.supplierName, amount: p.amount, createdBy: p.createdBy, status: p.status })
+      }
+    })
+
+    safeArray(sales).forEach((s) => {
+      if (s.status === 'approved') {
+        txs.push({ id: s.id, date: s.date, register: s.register, type: 'Sale', description: s.description || s.customerName, amount: s.amount, createdBy: s.createdBy, status: s.status })
+      }
+    })
+
+    safeArray(expenses).forEach((e) => {
+      if (e.status === 'approved') {
+        txs.push({ id: e.id, date: e.date, register: e.register, type: 'Expense', description: e.description, amount: e.amount, createdBy: e.createdBy, status: e.status })
+      }
+    })
+
+    safeArray(payments).forEach((pm) => {
+      if (pm.status === 'approved') {
+        txs.push({ id: pm.id, date: pm.date, register: pm.register, type: 'Payment', description: pm.description || pm.partyName, amount: pm.amount, createdBy: pm.createdBy, status: pm.status })
+      }
+    })
+
+    return txs
+  }, [purchases, sales, expenses, payments])
+
   const isInRange = (dateStr) => {
     if (dateFilter === 'today') return dateStr === todayStr
     if (dateFilter === 'week') return dateStr >= weekRange.start && dateStr <= weekRange.end
@@ -72,16 +112,16 @@ export default function Dashboard() {
     return true
   }
 
-  const approvedInRange = useMemo(() => mockTransactions.filter((t) => t.status === 'approved' && isInRange(t.date)), [dateFilter, customStart, customEnd])
-  const allInRange = useMemo(() => mockTransactions.filter((t) => isInRange(t.date)).sort((a, b) => b.date.localeCompare(a.date)), [dateFilter, customStart, customEnd])
+  const approvedInRange = useMemo(() => transactions.filter((t) => t.status === 'approved' && isInRange(t.date)), [transactions, dateFilter, customStart, customEnd])
+  const allInRange = useMemo(() => transactions.filter((t) => isInRange(t.date)).sort((a, b) => b.date.localeCompare(a.date)), [transactions, dateFilter, customStart, customEnd])
 
   const totalSales = useMemo(() => approvedInRange.filter((t) => t.type === 'Sale').reduce((sum, t) => sum + t.amount, 0), [approvedInRange])
   const totalPurchases = useMemo(() => approvedInRange.filter((t) => t.type === 'Purchase').reduce((sum, t) => sum + t.amount, 0), [approvedInRange])
   const totalExpenses = useMemo(() => approvedInRange.filter((t) => t.type === 'Expense').reduce((sum, t) => sum + t.amount, 0), [approvedInRange])
   const totalPayments = useMemo(() => approvedInRange.filter((t) => t.type === 'Payment').reduce((sum, t) => sum + t.amount, 0), [approvedInRange])
   const netProfitLoss = totalSales - totalPurchases - totalExpenses
-  const activeRegisters = mockRegisters.filter((r) => r.status === 'active').length
-  const pendingApprovals = mockApprovals.filter((a) => a.status === 'pending').length
+  const activeRegisters = registers.filter((r) => r.status === 'active').length
+  const pendingApprovals = approvals.filter((a) => a.status === 'pending').length
 
   const profitLossClass = netProfitLoss > 0 ? 'text-success' : netProfitLoss < 0 ? 'text-danger' : 'text-muted'
   const profitLossLabel = netProfitLoss > 0 ? 'Profit' : netProfitLoss < 0 ? 'Loss' : 'Break-even'
