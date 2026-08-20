@@ -11,12 +11,12 @@ import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import './Reports.css'
 
 const reportTabs = [
-  { key: 'sales', label: 'Sales Report' },
-  { key: 'purchases', label: 'Purchase Report' },
-  { key: 'expenses', label: 'Expense Report' },
-  { key: 'payments', label: 'Payment Report' },
-  { key: 'profitloss', label: 'Profit / Loss' },
-  { key: 'registers', label: 'Register Summary' },
+  { key: 'sales', label: 'Sales', color: '#166534', bg: '#dcfce7', border: '#bbf7d0' },
+  { key: 'purchases', label: 'Purchases', color: '#991b1b', bg: '#fee2e2', border: '#fecaca' },
+  { key: 'expenses', label: 'Expenses', color: '#92400e', bg: '#fef3c7', border: '#fde68a' },
+  { key: 'payments', label: 'Payments', color: '#1e40af', bg: '#dbeafe', border: '#bfdbfe' },
+  { key: 'profitloss', label: 'Profit / Loss', color: '#2563eb', bg: '#dbeafe', border: '#bfdbfe' },
+  { key: 'registers', label: 'Registers', color: '#374151', bg: '#f3f4f6', border: '#e5e7eb' },
 ]
 
 const formatDate = (dateStr) => {
@@ -170,7 +170,7 @@ export default function Reports() {
         render: (val) => <Badge variant={val === 'approved' ? 'success' : val === 'pending' ? 'warning' : 'default'}>{val}</Badge>,
       },
     ]
-    return <Table columns={columns} data={salesData} emptyText="No approved sales found." />
+    return <Table columns={columns} data={salesData} emptyText="No approved sales found." cardViewOnMobile />
   }
 
   const renderPurchasesTable = () => {
@@ -191,7 +191,7 @@ export default function Reports() {
         render: (val) => <Badge variant={val === 'approved' ? 'success' : val === 'pending' ? 'warning' : 'default'}>{val}</Badge>,
       },
     ]
-    return <Table columns={columns} data={purchasesData} emptyText="No approved purchases found." />
+    return <Table columns={columns} data={purchasesData} emptyText="No approved purchases found." cardViewOnMobile />
   }
 
   const renderExpensesTable = () => {
@@ -212,7 +212,7 @@ export default function Reports() {
         render: (val) => <Badge variant={val === 'approved' ? 'success' : val === 'pending' ? 'warning' : 'default'}>{val}</Badge>,
       },
     ]
-    return <Table columns={columns} data={expensesData} emptyText="No approved expenses found." />
+    return <Table columns={columns} data={expensesData} emptyText="No approved expenses found." cardViewOnMobile />
   }
 
   const renderPaymentsTable = () => {
@@ -242,24 +242,24 @@ export default function Reports() {
         render: (val) => <Badge variant={val === 'approved' ? 'success' : val === 'pending' ? 'warning' : 'default'}>{val}</Badge>,
       },
     ]
-    return <Table columns={columns} data={paymentsData} emptyText="No approved payments found." />
+    return <Table columns={columns} data={paymentsData} emptyText="No approved payments found." cardViewOnMobile />
   }
 
   const renderProfitLoss = () => {
     return (
       <div className="profit-loss-container">
-        <div className="profit-loss-cards">
-          <div className="profit-loss-card">
-            <span className="profit-loss-label">Total Sales</span>
-            <span className="profit-loss-value profit-loss-sales">{formatCurrency(profitLossData.totalSales)}</span>
+        <div className="profit-loss-summary">
+          <div className="profit-loss-item">
+            <span className="profit-loss-item-label">Total Sales</span>
+            <span className="profit-loss-item-value profit-loss-sales">{formatCurrency(profitLossData.totalSales)}</span>
           </div>
-          <div className="profit-loss-card">
-            <span className="profit-loss-label">Total Purchases</span>
-            <span className="profit-loss-value profit-loss-purchase">{formatCurrency(profitLossData.totalPurchases)}</span>
+          <div className="profit-loss-item">
+            <span className="profit-loss-item-label">Total Purchases</span>
+            <span className="profit-loss-item-value profit-loss-purchase">{formatCurrency(profitLossData.totalPurchases)}</span>
           </div>
-          <div className="profit-loss-card">
-            <span className="profit-loss-label">Total Expenses</span>
-            <span className="profit-loss-value profit-loss-expense">{formatCurrency(profitLossData.totalExpenses)}</span>
+          <div className="profit-loss-item">
+            <span className="profit-loss-item-label">Total Expenses</span>
+            <span className="profit-loss-item-value profit-loss-expense">{formatCurrency(profitLossData.totalExpenses)}</span>
           </div>
         </div>
         <div className="profit-loss-result">
@@ -270,8 +270,7 @@ export default function Reports() {
         </div>
         <div className="profit-loss-formula">
           <span className="profit-loss-formula-text">
-            Total Approved Sales ({formatCurrency(profitLossData.totalSales)}) - Total Approved Purchases ({formatCurrency(profitLossData.totalPurchases)}) - Total Approved Expenses ({formatCurrency(profitLossData.totalExpenses)}) ={' '}
-            <strong>{formatCurrency(profitLossData.net)}</strong>
+            <strong>Formula:</strong> Sales ({formatCurrency(profitLossData.totalSales)}) - Purchases ({formatCurrency(profitLossData.totalPurchases)}) - Expenses ({formatCurrency(profitLossData.totalExpenses)}) = <strong>{formatCurrency(profitLossData.net)}</strong>
           </span>
         </div>
       </div>
@@ -313,7 +312,7 @@ export default function Reports() {
         render: (val) => <Badge variant="default">{val}</Badge>,
       },
     ]
-    return <Table columns={columns} data={registerSummaryData} emptyText="No active registers found." />
+    return <Table columns={columns} data={registerSummaryData} emptyText="No active registers found." cardViewOnMobile />
   }
 
   const renderContent = () => {
@@ -351,6 +350,11 @@ export default function Reports() {
           <button
             key={tab.key}
             className={`reports-tab ${activeTab === tab.key ? 'reports-tab-active' : ''}`}
+            style={
+              activeTab === tab.key
+                ? { backgroundColor: tab.bg, color: tab.color, borderColor: tab.border, boxShadow: `0 0 0 1px ${tab.border}` }
+                : { color: 'var(--color-gray-500)' }
+            }
             onClick={() => setActiveTab(tab.key)}
           >
             {tab.label}
@@ -358,46 +362,50 @@ export default function Reports() {
         ))}
       </div>
 
-      <Card
-        title={getReportTitle()}
-        subtitle={`${activeTab === 'profitloss' ? 'Profit/Loss summary' : activeTab === 'registers' ? 'Overview by register' : 'Approved transactions only'}`}
-        actions={
-          <div className="reports-toolbar">
-            <Select
-              options={registerOptions}
-              value={registerFilter}
-              onChange={(e) => setRegisterFilter(e.target.value)}
-              className="reports-filter"
-              placeholder="All Registers"
-            />
-            <Input
-              type="date"
-              value={dateFrom}
-              onChange={(e) => setDateFrom(e.target.value)}
-              className="reports-filter"
-              placeholder="From"
-            />
-            <Input
-              type="date"
-              value={dateTo}
-              onChange={(e) => setDateTo(e.target.value)}
-              className="reports-filter"
-              placeholder="To"
-            />
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="reports-filter"
-              placeholder="All Statuses"
-            />
-            <Button variant="secondary" onClick={handlePrint}>Print</Button>
-            <Button variant="secondary" onClick={() => alert('Export feature coming soon.')}>Export</Button>
-          </div>
-        }
-      >
+      <div className="reports-filter-bar">
+        <Select
+          options={registerOptions}
+          value={registerFilter}
+          onChange={(e) => setRegisterFilter(e.target.value)}
+          className="reports-filter"
+          placeholder="All Registers"
+        />
+        <Input
+          type="date"
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
+          className="reports-filter"
+          placeholder="From"
+        />
+        <Input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="reports-filter"
+          placeholder="To"
+        />
+        <Select
+          options={statusOptions}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="reports-filter"
+          placeholder="All Statuses"
+        />
+        <div className="reports-actions">
+          <Button variant="secondary" onClick={handlePrint}>Print</Button>
+          <Button variant="secondary" onClick={() => alert('Export feature coming soon.')}>Export</Button>
+        </div>
+      </div>
+
+      <div className="reports-content">
+        <div className="reports-content-header">
+          <h2 className="reports-content-title">{getReportTitle()}</h2>
+          <span className="reports-content-subtitle">
+            {activeTab === 'profitloss' ? 'Profit/Loss summary' : activeTab === 'registers' ? 'Overview by register' : 'Approved transactions only'}
+          </span>
+        </div>
         {renderContent()}
-      </Card>
+      </div>
     </div>
   )
 }

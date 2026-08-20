@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
@@ -358,12 +357,13 @@ export default function Approvals() {
         ))}
       </div>
 
-      <Card
-        title={`${tabs.find((t) => t.key === activeTab)?.label || 'Items'} Approvals`}
-        subtitle={`${currentItems.length} pending item${currentItems.length !== 1 ? 's' : ''}`}
-      >
-        <Table columns={columns} data={currentItems} emptyText="No pending approvals found." />
-      </Card>
+      <div className="approvals-content">
+        <div className="approvals-content-header">
+          <h2 className="approvals-content-title">{`${tabs.find((t) => t.key === activeTab)?.label || 'Items'} Approvals`}</h2>
+          <span className="approvals-content-subtitle">{currentItems.length} pending item{currentItems.length !== 1 ? 's' : ''}</span>
+        </div>
+        <Table columns={columns} data={currentItems} emptyText="No pending approvals found." cardViewOnMobile />
+      </div>
 
       <Modal open={showViewModal} onClose={() => { setShowViewModal(false); setSelectedItem(null); }} title="Approval Details">
         {selectedItem && (

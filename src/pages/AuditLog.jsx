@@ -1,5 +1,4 @@
 import { useState, useMemo } from 'react'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -106,43 +105,43 @@ export default function AuditLog() {
         <p className="page-subtitle">Track all important system actions.</p>
       </div>
 
-      <Card
-        title="Audit Log"
-        subtitle={`${filtered.length} record${filtered.length !== 1 ? 's' : ''}`}
-        actions={
-          <div className="audit-toolbar">
-            <Input
-              placeholder="Search audit log..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="audit-search"
-            />
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="audit-filter"
-            />
-            <Select
-              options={moduleOptions}
-              value={moduleFilter}
-              onChange={(e) => setModuleFilter(e.target.value)}
-              className="audit-filter"
-              placeholder="All Modules"
-            />
-            <Select
-              options={actionOptions}
-              value={actionFilter}
-              onChange={(e) => setActionFilter(e.target.value)}
-              className="audit-filter"
-              placeholder="All Actions"
-            />
-            <Button variant="secondary" onClick={handlePrint}>Print</Button>
-          </div>
-        }
-      >
-        <Table columns={columns} data={filtered} emptyText="No audit logs found." />
-      </Card>
+      <div className="audit-filter-bar">
+        <Input
+          placeholder="Search audit log..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="audit-search"
+        />
+        <Input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="audit-filter"
+        />
+        <Select
+          options={moduleOptions}
+          value={moduleFilter}
+          onChange={(e) => setModuleFilter(e.target.value)}
+          className="audit-filter"
+          placeholder="All Modules"
+        />
+        <Select
+          options={actionOptions}
+          value={actionFilter}
+          onChange={(e) => setActionFilter(e.target.value)}
+          className="audit-filter"
+          placeholder="All Actions"
+        />
+        <Button variant="secondary" onClick={handlePrint}>Print</Button>
+      </div>
+
+      <div className="audit-content">
+        <div className="audit-content-header">
+          <h2 className="audit-content-title">Audit Log</h2>
+          <span className="audit-content-subtitle">{filtered.length} record{filtered.length !== 1 ? 's' : ''}</span>
+        </div>
+        <Table columns={columns} data={filtered} emptyText="No audit logs found." cardViewOnMobile />
+      </div>
     </div>
   )
 }

@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -236,41 +235,41 @@ export default function AccountLedger() {
         <p className="page-subtitle">Approved transactions only. Simple business book view.</p>
       </div>
 
-      <Card
-        title="Account Ledger"
-        subtitle="Approved transactions only"
-        actions={
-          <div className="ledger-toolbar">
-            <Input
-              placeholder="Search ledger..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="ledger-search"
-            />
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="ledger-filter"
-            />
-            <Select
-              options={registerOptions}
-              value={registerFilter}
-              onChange={(e) => setRegisterFilter(e.target.value)}
-              className="ledger-filter"
-              placeholder="All Registers"
-            />
-            <Select
-              options={transactionTypeOptions}
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="ledger-filter"
-              placeholder="All Types"
-            />
-            <Button variant="secondary" onClick={handlePrint}>Print</Button>
-          </div>
-        }
-      >
+      <div className="ledger-filter-bar">
+        <Input
+          placeholder="Search ledger..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="ledger-search"
+        />
+        <Input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="ledger-filter"
+        />
+        <Select
+          options={registerOptions}
+          value={registerFilter}
+          onChange={(e) => setRegisterFilter(e.target.value)}
+          className="ledger-filter"
+          placeholder="All Registers"
+        />
+        <Select
+          options={transactionTypeOptions}
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="ledger-filter"
+          placeholder="All Types"
+        />
+        <Button variant="secondary" onClick={handlePrint}>Print</Button>
+      </div>
+
+      <div className="ledger-content">
+        <div className="ledger-content-header">
+          <h2 className="ledger-content-title">Account Ledger</h2>
+          <span className="ledger-content-subtitle">Approved transactions only</span>
+        </div>
         {filtered.length > 0 && (
           <div className="ledger-summary">
             <div className="ledger-summary-item">
@@ -289,8 +288,8 @@ export default function AccountLedger() {
             </div>
           </div>
         )}
-        <Table columns={columns} data={filtered} emptyText="No approved transactions found." />
-      </Card>
+        <Table columns={columns} data={filtered} emptyText="No approved transactions found." cardViewOnMobile />
+      </div>
     </div>
   )
 }

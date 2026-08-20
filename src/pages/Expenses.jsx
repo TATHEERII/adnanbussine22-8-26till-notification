@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -8,6 +7,7 @@ import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
+import FAB from '../components/ui/FAB'
 import { mockExpenses, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
@@ -354,49 +354,50 @@ export default function Expenses() {
         <p className="page-subtitle">Record and track business expenses inside active registers.</p>
       </div>
 
-      <Card
-        title="Expense History"
-        subtitle="All expense records"
-        actions={
-          <div className="expenses-toolbar">
-            <Input
-              placeholder="Search expenses..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="expenses-search"
-            />
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="expenses-filter"
-            />
-            <Select
-              options={expenseCategories.filter((c) => c.value)}
-              value={categoryFilter}
-              onChange={(e) => setCategoryFilter(e.target.value)}
-              className="expenses-filter"
-              placeholder="All Categories"
-            />
-            <Select
-              options={activeRegisterOptions}
-              value={registerFilter}
-              onChange={(e) => setRegisterFilter(e.target.value)}
-              className="expenses-filter"
-              placeholder="All Registers"
-            />
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="expenses-filter"
-            />
-            <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Expense</Button>
-          </div>
-        }
-      >
-        <Table columns={columns} data={filtered} emptyText="No expenses found. Create your first expense record." />
-      </Card>
+      <div className="expenses-filter-bar">
+        <Input
+          placeholder="Search expenses..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="expenses-search"
+        />
+        <Input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="expenses-filter"
+        />
+        <Select
+          options={expenseCategories.filter((c) => c.value)}
+          value={categoryFilter}
+          onChange={(e) => setCategoryFilter(e.target.value)}
+          className="expenses-filter"
+          placeholder="All Categories"
+        />
+        <Select
+          options={activeRegisterOptions}
+          value={registerFilter}
+          onChange={(e) => setRegisterFilter(e.target.value)}
+          className="expenses-filter"
+          placeholder="All Registers"
+        />
+        <Select
+          options={statusOptions}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="expenses-filter"
+        />
+        <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Expense</Button>
+      </div>
+
+      <div className="expenses-content">
+        <div className="expenses-content-header">
+          <h2 className="expenses-content-title">Expense History</h2>
+          <span className="expenses-content-subtitle">All expense records</span>
+        </div>
+        <Table columns={columns} data={filtered} emptyText="No expenses found. Create your first expense record." cardViewOnMobile />
+      </div>
+      <FAB onClick={() => { resetForm(); setShowCreateModal(true) }} label="+" />
 
       <Modal open={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm(); setSelectedExpense(null); }} title={selectedExpense ? 'Edit Expense' : 'New Expense'}>
         <form onSubmit={selectedExpense ? handleUpdateDraft : handleCreate}>

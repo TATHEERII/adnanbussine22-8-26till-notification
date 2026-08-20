@@ -4,39 +4,39 @@
 }
 
 .page-header {
-  margin-bottom: 1.5rem;
+  margin-bottom: var(--space-lg);
 }
 
 .page-title {
-  font-size: 1.5rem;
+  font-size: var(--font-xl);
   font-weight: 700;
   color: var(--color-gray-900);
 }
 
 .page-subtitle {
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
   color: var(--color-gray-500);
-  margin-top: 0.25rem;
+  margin-top: var(--space-xs);
 }
 
 .filter-bar {
   display: flex;
   align-items: center;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
   flex-wrap: wrap;
 }
 
 .filter-group {
   display: flex;
-  gap: 0.5rem;
+  gap: var(--space-sm);
   flex-wrap: wrap;
 }
 
 .filter-btn {
-  padding: 0.5rem 0.875rem;
+  padding: var(--space-sm) var(--space-md);
   border-radius: var(--radius);
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
   font-weight: 500;
   color: var(--color-gray-600);
   background-color: var(--color-white);
@@ -62,14 +62,14 @@
 .filter-dates {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-sm);
 }
 
 .filter-date-input {
-  padding: 0.5rem 0.75rem;
+  padding: var(--space-sm) var(--space-md);
   border: 1px solid var(--color-gray-300);
   border-radius: var(--radius);
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
   color: var(--color-gray-900);
   background-color: var(--color-white);
 }
@@ -81,23 +81,23 @@
 }
 
 .filter-date-sep {
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
   color: var(--color-gray-500);
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 1rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-md);
+  margin-bottom: var(--space-lg);
 }
 
 .stat-card .card-body {
-  padding: 1.25rem;
+  padding: var(--space-md);
 }
 
 .stat-value {
-  font-size: 1.75rem;
+  font-size: var(--font-lg);
   font-weight: 700;
   color: var(--color-gray-900);
 }
@@ -115,7 +115,7 @@
 }
 
 .mt-6 {
-  margin-top: 1.5rem;
+  margin-top: var(--space-lg);
 }
 
 .table-amount {
@@ -126,48 +126,48 @@
 .pl-grid {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: var(--space-sm);
 }
 
 .pl-row {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.625rem 0;
+  padding: var(--space-sm) 0;
 }
 
 .pl-label {
-  font-size: 0.875rem;
+  font-size: var(--font-sm);
   color: var(--color-gray-600);
 }
 
 .pl-value {
-  font-size: 0.9375rem;
+  font-size: var(--font-md);
   font-weight: 600;
   color: var(--color-gray-900);
   font-variant-numeric: tabular-nums;
 }
 
 .pl-sales {
-  color: var(--color-success);
+  color: #166534;
 }
 
 .pl-purchases {
-  color: var(--color-danger);
+  color: #991b1b;
 }
 
 .pl-expenses {
-  color: var(--color-warning);
+  color: #92400e;
 }
 
 .pl-divider {
   height: 1px;
   background-color: var(--color-gray-200);
-  margin: 0.25rem 0;
+  margin: var(--space-xs) 0;
 }
 
 .pl-total {
-  padding-top: 0.75rem;
+  padding-top: var(--space-sm);
 }
 
 .pl-total .pl-label {
@@ -176,7 +176,7 @@
 }
 
 .pl-total .pl-value {
-  font-size: 1.125rem;
+  font-size: var(--font-lg);
 }
 
 .pl-total.text-success .pl-value {
@@ -194,9 +194,9 @@
 .pl-badge {
   display: inline-flex;
   align-self: flex-end;
-  padding: 0.25rem 0.75rem;
+  padding: var(--space-xs) var(--space-md);
   border-radius: 9999px;
-  font-size: 0.75rem;
+  font-size: var(--font-xs);
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -220,16 +220,74 @@
 @media (max-width: 768px) {
   .stats-grid {
     grid-template-columns: 1fr;
+    gap: var(--space-sm);
   }
   .filter-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-sm);
   }
   .filter-dates {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-sm);
   }
   .filter-date-sep {
     text-align: center;
+  }
+}
+
+@media (max-width: 640px) {
+  .stat-value {
+    font-size: var(--font-lg);
+  }
+  .pl-row {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+  .pl-value {
+    text-align: left;
+  }
+  .pl-badge {
+    align-self: flex-start;
+  }
+
+  .stats-grid {
+    gap: var(--space-sm);
+  }
+
+  .page-header {
+    margin-bottom: var(--space-md);
+  }
+
+  .page-title {
+    font-size: var(--font-lg);
+  }
+
+  .page-subtitle {
+    font-size: var(--font-xs);
+  }
+
+  .filter-bar {
+    margin-bottom: var(--space-md);
+    gap: var(--space-sm);
+  }
+
+  .filter-group {
+    gap: var(--space-xs);
+  }
+
+  .filter-btn {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-xs);
+  }
+
+  .filter-date-input {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-xs);
+  }
+
+  .mt-6 {
+    margin-top: var(--space-md);
   }
 }

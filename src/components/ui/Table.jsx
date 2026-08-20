@@ -1,8 +1,8 @@
 import './Table.css'
 
-export default function Table({ columns, data, emptyText = 'No data found', className = '' }) {
+export default function Table({ columns, data, emptyText = 'No data found', className = '', cardViewOnMobile = false }) {
   return (
-    <div className={`table-container ${className}`}>
+    <div className={`table-container ${cardViewOnMobile ? 'table-container-card-mobile' : ''} ${className}`}>
       <table className="table">
         <thead>
           <tr>
@@ -33,6 +33,26 @@ export default function Table({ columns, data, emptyText = 'No data found', clas
           )}
         </tbody>
       </table>
+      {cardViewOnMobile && (
+        <div className="table-cards">
+          {data.length === 0 ? (
+            <div className="table-cards-empty">{emptyText}</div>
+          ) : (
+            data.map((row, idx) => (
+              <div key={idx} className="table-card">
+                {columns.map((col) => (
+                  <div key={col.key} className="table-card-row">
+                    <span className="table-card-label">{col.label}</span>
+                    <span className="table-card-value">
+                      {col.render ? col.render(row[col.key], row) : row[col.key]}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ))
+          )}
+        </div>
+      )}
     </div>
   )
 }

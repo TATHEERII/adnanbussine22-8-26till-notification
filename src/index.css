@@ -40,7 +40,67 @@
   --radius-lg: 0.75rem;
 
   --sidebar-width: 260px;
+  --sidebar-collapsed-width: 72px;
   --header-height: 64px;
+  --bottom-nav-height: 64px;
+  --touch-target: 44px;
+  --content-padding: 1.5rem;
+  --safe-area-bottom: env(safe-area-inset-bottom, 0px);
+
+  --font-xs: 0.6875rem;
+  --font-sm: 0.8125rem;
+  --font-base: 0.875rem;
+  --font-md: 1rem;
+  --font-lg: 1.125rem;
+  --font-xl: 1.25rem;
+  --font-2xl: 1.5rem;
+  --space-xs: 0.25rem;
+  --space-sm: 0.5rem;
+  --space-md: 1rem;
+  --space-lg: 1.5rem;
+  --space-xl: 2rem;
+}
+
+@media (min-width: 1024px) {
+  :root {
+    --content-padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  :root {
+    --content-padding: 0.875rem;
+    --font-xs: 0.6875rem;
+    --font-sm: 0.75rem;
+    --font-base: 0.8125rem;
+    --font-md: 0.9375rem;
+    --font-lg: 1.0625rem;
+    --font-xl: 1.125rem;
+    --font-2xl: 1.25rem;
+    --space-xs: 0.25rem;
+    --space-sm: 0.375rem;
+    --space-md: 0.75rem;
+    --space-lg: 1.25rem;
+    --space-xl: 1.5rem;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --content-padding: 0.75rem;
+    --font-xs: 0.625rem;
+    --font-sm: 0.6875rem;
+    --font-base: 0.75rem;
+    --font-md: 0.875rem;
+    --font-lg: 0.9375rem;
+    --font-xl: 1rem;
+    --font-2xl: 1.125rem;
+    --space-xs: 0.25rem;
+    --space-sm: 0.375rem;
+    --space-md: 0.625rem;
+    --space-lg: 1rem;
+    --space-xl: 1.25rem;
+  }
 }
 
 * {
@@ -98,10 +158,35 @@ ul, ol {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: var(--color-gray-300);
+  background: #000000;
   border-radius: var(--radius);
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: var(--color-gray-400);
+  background: #000000;
+}
+
+@media (max-width: 768px) {
+  button, a, input[type="submit"], .btn, .nav-link, .table-action-btn, .filter-btn, .approval-bell-btn, .header-menu-btn, .header-logout {
+    min-height: var(--touch-target);
+    min-width: var(--touch-target);
+  }
+
+  .sidebar-link {
+    min-height: var(--touch-target);
+  }
+
+  .bottom-nav-item {
+    min-width: var(--touch-target);
+    min-height: var(--touch-target);
+  }
+
+  .fab {
+    min-width: 56px;
+    min-height: 56px;
+  }
+
+  input, select, textarea {
+    min-height: var(--touch-target);
+  }
 }

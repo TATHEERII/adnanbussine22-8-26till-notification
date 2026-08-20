@@ -1,5 +1,6 @@
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useLocation } from 'react-router-dom'
 import './Header.css'
+import ApprovalBell from './ApprovalBell'
 
 const pageTitles = {
   '/dashboard': 'Dashboard',
@@ -16,19 +17,16 @@ const pageTitles = {
   '/settings': 'Settings',
 }
 
-export default function Header({ user, onLogout }) {
-  const navigate = useNavigate()
+export default function Header({ user, onToggleSidebar, sidebarOpen, sidebarCollapsed }) {
   const location = useLocation()
   const title = pageTitles[location.pathname] || 'Dashboard'
-
-  const handleLogout = () => {
-    onLogout?.()
-    navigate('/login')
-  }
 
   return (
     <header className="header">
       <div className="header-left">
+        <button className="header-menu-btn" onClick={onToggleSidebar} aria-label="Toggle menu">
+          {sidebarOpen ? '✕' : sidebarCollapsed ? '☰' : '☰'}
+        </button>
         <h1 className="header-page-title">{title}</h1>
       </div>
       <div className="header-right">
@@ -41,9 +39,7 @@ export default function Header({ user, onLogout }) {
             <span className="header-user-role">{user?.role === 'admin' ? 'Admin' : 'User'}</span>
           </div>
         </div>
-        <button className="header-logout" onClick={handleLogout} title="Logout">
-          🚪
-        </button>
+        <ApprovalBell user={user} />
       </div>
     </header>
   )

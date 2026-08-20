@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -8,6 +7,7 @@ import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
+import FAB from '../components/ui/FAB'
 import { mockPayments, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
@@ -365,49 +365,50 @@ export default function Payments() {
         <p className="page-subtitle">Record payment transactions inside active registers.</p>
       </div>
 
-      <Card
-        title="Payment History"
-        subtitle="All payment records"
-        actions={
-          <div className="payments-toolbar">
-            <Input
-              placeholder="Search payments..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="payments-search"
-            />
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="payments-filter"
-            />
-            <Select
-              options={activeRegisterOptions}
-              value={registerFilter}
-              onChange={(e) => setRegisterFilter(e.target.value)}
-              className="payments-filter"
-              placeholder="All Registers"
-            />
-            <Select
-              options={paymentTypeOptions}
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="payments-filter"
-              placeholder="All Types"
-            />
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="payments-filter"
-            />
-            <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Payment</Button>
-          </div>
-        }
-      >
-        <Table columns={columns} data={filtered} emptyText="No payments found. Create your first payment record." />
-      </Card>
+      <div className="payments-filter-bar">
+        <Input
+          placeholder="Search payments..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="payments-search"
+        />
+        <Input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="payments-filter"
+        />
+        <Select
+          options={activeRegisterOptions}
+          value={registerFilter}
+          onChange={(e) => setRegisterFilter(e.target.value)}
+          className="payments-filter"
+          placeholder="All Registers"
+        />
+        <Select
+          options={paymentTypeOptions}
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value)}
+          className="payments-filter"
+          placeholder="All Types"
+        />
+        <Select
+          options={statusOptions}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="payments-filter"
+        />
+        <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Payment</Button>
+      </div>
+
+      <div className="payments-content">
+        <div className="payments-content-header">
+          <h2 className="payments-content-title">Payment History</h2>
+          <span className="payments-content-subtitle">All payment records</span>
+        </div>
+        <Table columns={columns} data={filtered} emptyText="No payments found. Create your first payment record." cardViewOnMobile />
+      </div>
+      <FAB onClick={() => { resetForm(); setShowCreateModal(true) }} label="+" />
 
       <Modal open={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm(); setSelectedPayment(null); }} title={selectedPayment ? 'Edit Payment' : 'New Payment'}>
         <form onSubmit={selectedPayment ? handleUpdateDraft : handleCreate}>

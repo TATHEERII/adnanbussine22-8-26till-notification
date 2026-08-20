@@ -3,43 +3,120 @@
   margin: 0 auto;
 }
 
-.audit-toolbar {
+.audit-filter-bar {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  align-items: flex-end;
+  gap: var(--space-sm);
   flex-wrap: wrap;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-md);
 }
 
-.audit-search {
-  width: 220px;
+.audit-filter-bar .audit-search {
+  width: 200px;
+  flex-shrink: 0;
 }
 
-.audit-filter {
-  width: 180px;
+.audit-filter-bar .audit-filter {
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.audit-filter-bar .btn {
+  margin-left: auto;
+}
+
+.audit-content {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+}
+
+.audit-content-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.audit-content-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.audit-content-subtitle {
+  font-size: var(--font-xs);
+  color: var(--color-gray-500);
 }
 
 .audit-ref {
   font-family: monospace;
-  font-size: 0.8125rem;
+  font-size: var(--font-sm);
   background-color: var(--color-gray-100);
   padding: 0.125rem 0.375rem;
   border-radius: var(--radius-sm);
 }
 
 @media (max-width: 768px) {
-  .audit-toolbar {
+  .audit-filter-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-sm);
   }
-  .audit-search,
-  .audit-filter {
+
+  .audit-filter-bar .audit-search,
+  .audit-filter-bar .audit-filter {
     width: 100%;
+  }
+
+  .audit-filter-bar .btn {
+    margin-left: 0;
+  }
+
+  .audit-page .card-header {
+    position: sticky;
+    top: var(--header-height);
+    z-index: 40;
+    background: var(--color-white);
+    padding: var(--space-md) var(--space-lg);
+    border-bottom: 1px solid var(--color-gray-200);
+  }
+}
+
+@media (max-width: 640px) {
+  .page-header {
+    margin-bottom: var(--space-md);
+  }
+
+  .page-title {
+    font-size: var(--font-lg);
+  }
+
+  .page-subtitle {
+    font-size: var(--font-xs);
+  }
+
+  .audit-filter-bar {
+    gap: var(--space-sm);
+  }
+
+  .audit-filter-bar input,
+  .audit-filter-bar select {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-xs);
   }
 }
 
 @media print {
   .page-header,
-  .audit-toolbar,
+  .audit-filter-bar,
   .card-actions {
     display: none !important;
   }

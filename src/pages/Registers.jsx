@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -8,6 +7,7 @@ import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
+import FAB from '../components/ui/FAB'
 import { mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
@@ -284,29 +284,30 @@ export default function Registers() {
         <p className="page-subtitle">Create and manage business registers.</p>
       </div>
 
-      <Card
-        title="Registers"
-        subtitle="Manage your business registers"
-        actions={
-          <div className="registers-toolbar">
-            <Input
-              placeholder="Search registers..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="registers-search"
-            />
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="registers-filter"
-            />
-            <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Register</Button>
-          </div>
-        }
-      >
-        <Table columns={columns} data={filtered} emptyText="No registers found. Create your first register to get started." />
-      </Card>
+      <div className="registers-filter-bar">
+        <Input
+          placeholder="Search registers..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="registers-search"
+        />
+        <Select
+          options={statusOptions}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="registers-filter"
+        />
+        <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Register</Button>
+      </div>
+
+      <div className="registers-content">
+        <div className="registers-content-header">
+          <h2 className="registers-content-title">Registers</h2>
+          <span className="registers-content-subtitle">Manage your business registers</span>
+        </div>
+        <Table columns={columns} data={filtered} emptyText="No registers found. Create your first register to get started." cardViewOnMobile />
+      </div>
+      <FAB onClick={() => { resetForm(); setShowCreateModal(true) }} label="+" />
 
       <Modal open={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm(); setSelectedRegister(null); }} title={selectedRegister ? 'Edit Register' : 'Create New Register'}>
         <form onSubmit={selectedRegister ? handleUpdateDraft : handleCreate}>

@@ -1,4 +1,6 @@
-import { NavLink } from 'react-router-dom'
+import { useState, useEffect } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
+import { LogOut } from 'lucide-react'
 import './Sidebar.css'
 
 const allNavItems = [
@@ -16,10 +18,20 @@ const allNavItems = [
   { path: '/settings', label: 'Settings', icon: '⚙️', roles: ['admin'] },
 ]
 
-export default function Sidebar({ user }) {
+export default function Sidebar({ user, onClose, sidebarOpen, collapsed, onLogout }) {
+  const location = useLocation()
   const navItems = allNavItems.filter((item) => item.roles.includes(user?.role || 'user'))
+
+  useEffect(() => {
+    onClose?.()
+  }, [location.pathname])
+
+  const handleLogout = () => {
+    onLogout?.()
+  }
+
   return (
-    <aside className="sidebar">
+    <aside className={`sidebar ${sidebarOpen ? 'sidebar-open' : ''} ${collapsed ? 'sidebar-collapsed' : ''}`}>
       <div className="sidebar-brand">
         <div className="sidebar-logo">📦</div>
         <div className="sidebar-title">
@@ -40,6 +52,10 @@ export default function Sidebar({ user }) {
         ))}
       </nav>
       <div className="sidebar-footer">
+        <button type="button" className="sidebar-logout" onClick={handleLogout}>
+          <span className="sidebar-logout-icon"><LogOut size={18} strokeWidth={2} /></span>
+          <span className="sidebar-logout-label">Logout</span>
+        </button>
         <p className="sidebar-copyright">© 2026 ImportBiz</p>
       </div>
     </aside>

@@ -5,44 +5,87 @@
 
 .reports-tabs {
   display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.5rem;
-  border-bottom: 1px solid var(--color-gray-200);
-  overflow-x: auto;
+  gap: var(--space-xs);
+  margin-bottom: var(--space-md);
+  flex-wrap: wrap;
 }
 
 .reports-tab {
-  padding: 0.75rem 1.25rem;
-  border: none;
+  padding: var(--space-sm) var(--space-md);
+  border: 1px solid transparent;
   background: none;
-  font-size: 0.875rem;
-  font-weight: 500;
+  font-size: var(--font-sm);
+  font-weight: 600;
   color: var(--color-gray-500);
   cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  white-space: nowrap;
+  border-radius: var(--radius);
   transition: all 0.15s;
+  white-space: nowrap;
 }
 
 .reports-tab:hover {
+  background-color: var(--color-gray-50);
   color: var(--color-gray-700);
 }
 
 .reports-tab-active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
+  font-weight: 600;
 }
 
-.reports-toolbar {
+.reports-filter-bar {
   display: flex;
-  align-items: center;
-  gap: 0.75rem;
+  align-items: flex-end;
+  gap: var(--space-sm);
   flex-wrap: wrap;
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius);
+  margin-bottom: var(--space-md);
 }
 
 .reports-filter {
-  width: 180px;
+  width: 160px;
+  flex-shrink: 0;
+}
+
+.reports-filter input,
+.reports-filter select {
+  font-size: var(--font-sm);
+  padding: var(--space-sm) var(--space-md);
+}
+
+.reports-actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-left: auto;
+}
+
+.reports-content {
+  background-color: var(--color-white);
+  border: 1px solid var(--color-gray-200);
+  border-radius: var(--radius);
+  padding: var(--space-md);
+}
+
+.reports-content-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: var(--space-md);
+  padding-bottom: var(--space-sm);
+  border-bottom: 1px solid var(--color-gray-100);
+}
+
+.reports-content-title {
+  font-size: var(--font-md);
+  font-weight: 600;
+  color: var(--color-gray-900);
+}
+
+.reports-content-subtitle {
+  font-size: var(--font-xs);
+  color: var(--color-gray-500);
 }
 
 .report-amount {
@@ -65,33 +108,35 @@
 .profit-loss-container {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-md);
 }
 
-.profit-loss-cards {
+.profit-loss-summary {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space-sm);
 }
 
-.profit-loss-card {
-  padding: 1.25rem;
+.profit-loss-item {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  padding: var(--space-sm) var(--space-md);
   background-color: var(--color-gray-50);
   border-radius: var(--radius);
   border: 1px solid var(--color-gray-200);
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
 }
 
-.profit-loss-label {
-  font-size: 0.875rem;
+.profit-loss-item-label {
+  font-size: var(--font-xs);
   color: var(--color-gray-500);
   font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
-.profit-loss-value {
-  font-size: 1.5rem;
+.profit-loss-item-value {
+  font-size: var(--font-lg);
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
@@ -112,20 +157,20 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 1.25rem;
-  background-color: var(--color-primary-light);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-gray-50);
   border-radius: var(--radius);
-  border: 1px solid var(--color-primary-light);
+  border: 1px solid var(--color-gray-200);
 }
 
 .profit-loss-result-label {
-  font-size: 1.125rem;
+  font-size: var(--font-sm);
   font-weight: 600;
   color: var(--color-gray-900);
 }
 
 .profit-loss-result-value {
-  font-size: 1.25rem;
+  font-size: var(--font-md);
   font-weight: 700;
 }
 
@@ -138,38 +183,110 @@
 }
 
 .profit-loss-formula {
-  padding: 1rem;
-  background-color: var(--color-gray-50);
+  padding: var(--space-sm) var(--space-md);
+  background-color: var(--color-white);
   border-radius: var(--radius);
   border: 1px solid var(--color-gray-200);
+  font-size: var(--font-xs);
+  color: var(--color-gray-600);
+  line-height: 1.5;
 }
 
-.profit-loss-formula-text {
-  font-size: 0.875rem;
-  color: var(--color-gray-600);
-  line-height: 1.6;
+.profit-loss-formula strong {
+  color: var(--color-gray-700);
+  font-weight: 600;
 }
 
 @media (max-width: 768px) {
-  .reports-toolbar {
+  .reports-filter-bar {
     flex-direction: column;
     align-items: stretch;
+    gap: var(--space-sm);
+    padding: var(--space-sm);
   }
+
   .reports-filter {
     width: 100%;
   }
+
+  .reports-actions {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .reports-actions .btn {
+    flex: 1;
+  }
+
   .profit-loss-result {
     flex-direction: column;
-    gap: 0.5rem;
+    gap: var(--space-xs);
     text-align: center;
+  }
+
+  .profit-loss-summary {
+    grid-template-columns: 1fr;
+  }
+
+  .reports-content {
+    padding: var(--space-sm);
+  }
+
+  .reports-content-header {
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+}
+
+@media (max-width: 640px) {
+  .reports-tabs {
+    gap: 0;
+  }
+
+  .reports-tab {
+    padding: var(--space-sm) var(--space-md);
+    font-size: var(--font-xs);
+  }
+
+  .reports-filter-bar {
+    gap: var(--space-xs);
+    padding: var(--space-xs);
+  }
+
+  .reports-filter input,
+  .reports-filter select {
+    padding: var(--space-xs) var(--space-sm);
+    font-size: var(--font-xs);
+  }
+
+  .reports-content {
+    padding: var(--space-sm);
+  }
+
+  .reports-content-title {
+    font-size: var(--font-sm);
+  }
+
+  .profit-loss-item {
+    padding: var(--space-sm);
+  }
+
+  .profit-loss-item-value {
+    font-size: var(--font-md);
+  }
+
+  .profit-loss-result {
+    padding: var(--space-sm);
+  }
+
+  .profit-loss-result-value {
+    font-size: var(--font-sm);
   }
 }
 
 @media print {
-  .page-header,
-  .reports-toolbar,
   .reports-tabs,
-  .card-actions {
+  .reports-filter-bar {
     display: none !important;
   }
 
@@ -177,12 +294,12 @@
     max-width: none;
   }
 
-  .card {
+  .reports-content {
     box-shadow: none;
     border: 1px solid var(--color-gray-300);
   }
 
-  .profit-loss-card {
+  .profit-loss-item {
     background-color: #fff;
     border: 1px solid var(--color-gray-300);
   }

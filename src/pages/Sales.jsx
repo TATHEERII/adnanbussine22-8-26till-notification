@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -8,6 +7,7 @@ import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
+import FAB from '../components/ui/FAB'
 import { mockSales, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
@@ -343,42 +343,43 @@ export default function Sales() {
         <p className="page-subtitle">Record sales transactions inside active registers.</p>
       </div>
 
-      <Card
-        title="Sales History"
-        subtitle="All sales records"
-        actions={
-          <div className="sales-toolbar">
-            <Input
-              placeholder="Search sales..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="sales-search"
-            />
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="sales-filter"
-            />
-            <Select
-              options={activeRegisterOptions}
-              value={registerFilter}
-              onChange={(e) => setRegisterFilter(e.target.value)}
-              className="sales-filter"
-              placeholder="All Registers"
-            />
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="sales-filter"
-            />
-            <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Sale</Button>
-          </div>
-        }
-      >
-        <Table columns={columns} data={filtered} emptyText="No sales found. Create your first sale record." />
-      </Card>
+      <div className="sales-filter-bar">
+        <Input
+          placeholder="Search sales..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="sales-search"
+        />
+        <Input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="sales-filter"
+        />
+        <Select
+          options={activeRegisterOptions}
+          value={registerFilter}
+          onChange={(e) => setRegisterFilter(e.target.value)}
+          className="sales-filter"
+          placeholder="All Registers"
+        />
+        <Select
+          options={statusOptions}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="sales-filter"
+        />
+        <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Sale</Button>
+      </div>
+
+      <div className="sales-content">
+        <div className="sales-content-header">
+          <h2 className="sales-content-title">Sales History</h2>
+          <span className="sales-content-subtitle">All sales records</span>
+        </div>
+        <Table columns={columns} data={filtered} emptyText="No sales found. Create your first sale record." cardViewOnMobile />
+      </div>
+      <FAB onClick={() => { resetForm(); setShowCreateModal(true) }} label="+" />
 
       <Modal open={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm(); setSelectedSale(null); }} title={selectedSale ? 'Edit Sale' : 'New Sale'}>
         <form onSubmit={selectedSale ? handleUpdateDraft : handleCreate}>

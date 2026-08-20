@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -8,6 +7,7 @@ import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
+import FAB from '../components/ui/FAB'
 import { mockPurchases, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
@@ -327,42 +327,43 @@ export default function Purchase() {
         <p className="page-subtitle">Record purchase transactions inside active registers.</p>
       </div>
 
-      <Card
-        title="Purchase History"
-        subtitle="All purchase records"
-        actions={
-          <div className="purchase-toolbar">
-            <Input
-              placeholder="Search purchases..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="purchase-search"
-            />
-            <Input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="purchase-filter"
-            />
-            <Select
-              options={activeRegisterOptions}
-              value={registerFilter}
-              onChange={(e) => setRegisterFilter(e.target.value)}
-              className="purchase-filter"
-              placeholder="All Registers"
-            />
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="purchase-filter"
-            />
-            <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Purchase</Button>
-          </div>
-        }
-      >
-        <Table columns={columns} data={filtered} emptyText="No purchases found. Create your first purchase record." />
-      </Card>
+      <div className="purchase-filter-bar">
+        <Input
+          placeholder="Search purchases..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="purchase-search"
+        />
+        <Input
+          type="date"
+          value={dateFilter}
+          onChange={(e) => setDateFilter(e.target.value)}
+          className="purchase-filter"
+        />
+        <Select
+          options={activeRegisterOptions}
+          value={registerFilter}
+          onChange={(e) => setRegisterFilter(e.target.value)}
+          className="purchase-filter"
+          placeholder="All Registers"
+        />
+        <Select
+          options={statusOptions}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="purchase-filter"
+        />
+        <Button onClick={() => { resetForm(); setShowCreateModal(true) }}>+ New Purchase</Button>
+      </div>
+
+      <div className="purchase-content">
+        <div className="purchase-content-header">
+          <h2 className="purchase-content-title">Purchase History</h2>
+          <span className="purchase-content-subtitle">All purchase records</span>
+        </div>
+        <Table columns={columns} data={filtered} emptyText="No purchases found. Create your first purchase record." cardViewOnMobile />
+      </div>
+      <FAB onClick={() => { resetForm(); setShowCreateModal(true) }} label="+" />
 
       <Modal open={showCreateModal} onClose={() => { setShowCreateModal(false); resetForm(); setSelectedPurchase(null); }} title={selectedPurchase ? 'Edit Purchase' : 'New Purchase'}>
         <form onSubmit={selectedPurchase ? handleUpdateDraft : handleCreate}>

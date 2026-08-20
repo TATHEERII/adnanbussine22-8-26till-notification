@@ -187,7 +187,7 @@ export default function Dashboard() {
       </div>
 
       <Card title="Recent Transactions" subtitle={`Showing ${allInRange.length} transaction(s)`} className="mt-6">
-        <Table columns={transactionColumns} data={allInRange} emptyText="No transactions found for the selected period." />
+        <Table columns={transactionColumns} data={allInRange} emptyText="No transactions found for the selected period." cardViewOnMobile />
       </Card>
 
       <Card title="Profit / Loss Summary" subtitle="Financial breakdown for selected period" className="mt-6">

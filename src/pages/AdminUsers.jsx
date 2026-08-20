@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { Navigate } from 'react-router-dom'
-import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
@@ -364,31 +363,31 @@ export default function AdminUsers() {
         <p className="page-subtitle">Manage users and monitor system activity.</p>
       </div>
 
-      <Card
-        title="Users"
-        subtitle={`${filtered.length} user${filtered.length !== 1 ? 's' : ''}`}
-        actions={
-          <div className="admin-toolbar">
-            <Input
-              placeholder="Search users..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="admin-search"
-            />
-            <Select
-              options={statusOptions}
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="admin-filter"
-              placeholder="All Statuses"
-            />
-            <Button variant="danger" onClick={() => setShowResetModal(true)}>Reset All Data</Button>
-            <Button onClick={() => { resetCreateForm(); setShowCreateModal(true); }}>+ Create User</Button>
-          </div>
-        }
-      >
-        <Table columns={columns} data={filtered} emptyText="No users found." />
-      </Card>
+      <div className="admin-filter-bar">
+        <Input
+          placeholder="Search users..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="admin-search"
+        />
+        <Select
+          options={statusOptions}
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          className="admin-filter"
+          placeholder="All Statuses"
+        />
+        <Button variant="danger" onClick={() => setShowResetModal(true)}>Reset All Data</Button>
+        <Button onClick={() => { resetCreateForm(); setShowCreateModal(true); }}>+ Create User</Button>
+      </div>
+
+      <div className="admin-content">
+        <div className="admin-content-header">
+          <h2 className="admin-content-title">Users</h2>
+          <span className="admin-content-subtitle">{filtered.length} user{filtered.length !== 1 ? 's' : ''}</span>
+        </div>
+        <Table columns={columns} data={filtered} emptyText="No users found." cardViewOnMobile />
+      </div>
 
       {renderDetailsModal()}
       {renderPermissionsModal()}
