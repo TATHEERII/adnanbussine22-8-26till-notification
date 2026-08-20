@@ -1,22 +1,23 @@
 import { NavLink } from 'react-router-dom'
 import './Sidebar.css'
 
-const navItems = [
-  { path: '/dashboard', label: 'Dashboard', icon: '📊' },
-  { path: '/registers', label: 'Registers', icon: '📒' },
-  { path: '/purchase', label: 'Purchase', icon: '🛒' },
-  { path: '/sales', label: 'Sales', icon: '💰' },
-  { path: '/expenses', label: 'Expenses', icon: '🧾' },
-  { path: '/payments', label: 'Payments', icon: '💳' },
-  { path: '/account-ledger', label: 'Account Ledger', icon: '📋' },
-  { path: '/approvals', label: 'Approvals', icon: '✅' },
-  { path: '/reports', label: 'Reports', icon: '📈' },
-  { path: '/audit-log', label: 'Audit Log', icon: '🕒' },
-  { path: '/admin', label: 'Admin / Users', icon: '👥' },
-  { path: '/settings', label: 'Settings', icon: '⚙️' },
+const allNavItems = [
+  { path: '/dashboard', label: 'Dashboard', icon: '📊', roles: ['user'] },
+  { path: '/registers', label: 'Registers', icon: '📒', roles: ['user'] },
+  { path: '/purchase', label: 'Purchase', icon: '🛒', roles: ['user'] },
+  { path: '/sales', label: 'Sales', icon: '💰', roles: ['user'] },
+  { path: '/expenses', label: 'Expenses', icon: '🧾', roles: ['user'] },
+  { path: '/payments', label: 'Payments', icon: '💳', roles: ['user'] },
+  { path: '/account-ledger', label: 'Account Ledger', icon: '📋', roles: ['user'] },
+  { path: '/approvals', label: 'Approvals', icon: '✅', roles: ['user'] },
+  { path: '/reports', label: 'Reports', icon: '📈', roles: ['user'] },
+  { path: '/audit-log', label: 'Audit Log', icon: '🕒', roles: ['user'] },
+  { path: '/admin', label: 'Admin / Users', icon: '👥', roles: ['admin'] },
+  { path: '/settings', label: 'Settings', icon: '⚙️', roles: ['admin'] },
 ]
 
-export default function Sidebar() {
+export default function Sidebar({ user }) {
+  const navItems = allNavItems.filter((item) => item.roles.includes(user?.role || 'user'))
   return (
     <aside className="sidebar">
       <div className="sidebar-brand">

@@ -159,6 +159,13 @@
   color: var(--color-gray-900);
 }
 
+.permissions-note {
+  font-size: 0.8125rem;
+  color: var(--color-gray-500);
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
 .permissions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -191,6 +198,52 @@
 .permission-checkbox span {
   font-size: 0.875rem;
   color: var(--color-gray-700);
+  font-weight: 500;
+}
+
+.reset-warning {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.reset-warning-text {
+  font-size: 0.9375rem;
+  color: var(--color-gray-900);
+  font-weight: 600;
+}
+
+.reset-warning-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.reset-warning-list li {
+  font-size: 0.875rem;
+  color: var(--color-gray-700);
+  line-height: 1.5;
+}
+
+.reset-warning-exception {
+  font-size: 0.875rem;
+  color: var(--color-success);
+  font-weight: 500;
+  padding: 0.75rem;
+  background-color: var(--color-success-light);
+  border-radius: var(--radius);
+  border: 1px solid #bbf7d0;
+}
+
+.reset-warning-exception strong {
+  color: #166534;
+}
+
+.reset-warning-confirm {
+  font-size: 0.875rem;
+  color: var(--color-gray-600);
   font-weight: 500;
 }
 

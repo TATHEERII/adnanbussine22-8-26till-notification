@@ -7,7 +7,7 @@ import './Layout.css'
 export default function Layout({ user, onLogout }) {
   return (
     <div className="layout">
-      <Sidebar />
+      <Sidebar user={user} />
       <div className="layout-main">
         <Header user={user} onLogout={onLogout} />
         <main className="layout-content">

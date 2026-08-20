@@ -1,6 +1,7 @@
-import { useState } from 'react'
-import { mockUsers, currentUser } from '../data/mockData'
+import { useState, useMemo, useEffect } from 'react'
+import { mockUsers } from '../data/mockData'
 import { useAuditLog } from '../hooks/useAuditLog'
+import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import './Login.css'
 
 export default function Login({ onLogin }) {
@@ -10,7 +11,25 @@ export default function Login({ onLogin }) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
+  const [storedUsers, setStoredUsers] = useLocalStorageState('importbiz_v2_users', [])
+
   const { addLog } = useAuditLog()
+
+  useEffect(() => {
+    const cleaned = Array.isArray(storedUsers) ? storedUsers.filter((u) => u.password) : []
+    if (cleaned.length !== storedUsers.length) {
+      setStoredUsers(cleaned)
+    }
+  }, [storedUsers, setStoredUsers])
+
+  const allUsers = useMemo(() => {
+    const local = Array.isArray(storedUsers) ? storedUsers : []
+    const defaults = Array.isArray(mockUsers) ? mockUsers : []
+    const map = new Map()
+    defaults.forEach((u) => map.set(u.id, u))
+    local.forEach((u) => map.set(u.id, u))
+    return Array.from(map.values())
+  }, [storedUsers])
 
   const validate = () => {
     if (!username.trim() || !password.trim()) {
@@ -30,10 +49,11 @@ export default function Login({ onLogin }) {
 
     await new Promise((resolve) => setTimeout(resolve, 800))
 
-    const matchedUser = mockUsers.find(
+    const matchedUser = allUsers.find(
       (u) =>
-        u.username.toLowerCase() === username.trim().toLowerCase() ||
-        u.email.toLowerCase() === username.trim().toLowerCase()
+        (u.username.toLowerCase() === username.trim().toLowerCase() ||
+          u.email.toLowerCase() === username.trim().toLowerCase()) &&
+        u.password === password.trim()
     )
 
     if (matchedUser) {

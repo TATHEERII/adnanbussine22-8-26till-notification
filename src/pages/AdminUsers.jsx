@@ -1,12 +1,15 @@
 import { useState, useMemo } from 'react'
+import { Navigate } from 'react-router-dom'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
+import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
 import { mockUsers } from '../data/mockData'
+import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import './AdminUsers.css'
 
@@ -39,13 +42,39 @@ const formatDate = (dateStr) => {
 }
 
 export default function AdminUsers() {
+  const current = useAuth()
+  if (current?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />
+  }
+
   const [users, setUsers] = useLocalStorageState('importbiz_v2_users', mockUsers)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [showPermissionsModal, setShowPermissionsModal] = useState(false)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [showResetModal, setShowResetModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
+
+  const [createForm, setCreateForm] = useState({
+    name: '',
+    username: '',
+    email: '',
+    password: '',
+    role: 'user',
+    status: 'active',
+    permissions: {
+      canCreateRegister: false,
+      canCreatePurchase: false,
+      canCreateSale: false,
+      canCreateExpense: false,
+      canCreatePayment: false,
+      canApprove: false,
+      canViewReports: false,
+      canViewAuditLog: false,
+    },
+  })
 
   const filtered = useMemo(() => {
     return users.filter((u) => {
@@ -85,6 +114,84 @@ export default function AdminUsers() {
     )
     setShowPermissionsModal(false)
     setSelectedUser(null)
+  }
+
+  const resetCreateForm = () => {
+    setCreateForm({
+      name: '',
+      username: '',
+      email: '',
+      password: '',
+      role: 'user',
+      status: 'active',
+      permissions: {
+        canCreateRegister: false,
+        canCreatePurchase: false,
+        canCreateSale: false,
+        canCreateExpense: false,
+        canCreatePayment: false,
+        canApprove: false,
+        canViewReports: false,
+        canViewAuditLog: false,
+      },
+    })
+  }
+
+  const handleCreateUser = (e) => {
+    e.preventDefault()
+    if (!createForm.name.trim() || !createForm.username.trim() || !createForm.email.trim() || !createForm.password.trim()) return
+
+    const today = new Date().toISOString().split('T')[0]
+    const newUser = {
+      id: `u${Date.now()}`,
+      name: createForm.name.trim(),
+      username: createForm.username.trim(),
+      email: createForm.email.trim(),
+      password: createForm.password.trim(),
+      role: createForm.role,
+      status: createForm.status,
+      createdAt: today,
+      lastActivity: today,
+      registerCount: 0,
+      permissions: { ...createForm.permissions },
+    }
+
+    setUsers((prev) => [...prev, newUser])
+    resetCreateForm()
+    setShowCreateModal(false)
+  }
+
+  const handleCreatePermissionChange = (key, checked) => {
+    setCreateForm((prev) => ({
+      ...prev,
+      permissions: {
+        ...prev.permissions,
+        [key]: checked,
+      },
+    }))
+  }
+
+  const handleResetAll = () => {
+    const keysToReset = [
+      'importbiz_v2_registers',
+      'importbiz_v2_purchases',
+      'importbiz_v2_sales',
+      'importbiz_v2_expenses',
+      'importbiz_v2_payments',
+      'importbiz_v2_audit_logs',
+      'importbiz_v2_approvals',
+      'importbiz_v2_settings',
+    ]
+
+    keysToReset.forEach((key) => {
+      try {
+        localStorage.removeItem(key)
+      } catch {
+        // ignore storage errors
+      }
+    })
+
+    setShowResetModal(false)
   }
 
   const columns = [
@@ -275,6 +382,8 @@ export default function AdminUsers() {
               className="admin-filter"
               placeholder="All Statuses"
             />
+            <Button variant="danger" onClick={() => setShowResetModal(true)}>Reset All Data</Button>
+            <Button onClick={() => { resetCreateForm(); setShowCreateModal(true); }}>+ Create User</Button>
           </div>
         }
       >
@@ -283,6 +392,103 @@ export default function AdminUsers() {
 
       {renderDetailsModal()}
       {renderPermissionsModal()}
+
+      <Modal open={showCreateModal} onClose={() => { setShowCreateModal(false); resetCreateForm(); }} title="Create User">
+        <form onSubmit={handleCreateUser}>
+          <FormSection title="User Information">
+            <Input
+              label="Full Name"
+              placeholder="Enter full name"
+              value={createForm.name}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, name: e.target.value }))}
+              required
+            />
+            <Input
+              label="Username"
+              placeholder="Enter username"
+              value={createForm.username}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, username: e.target.value }))}
+              required
+            />
+            <Input
+              label="Email"
+              type="email"
+              placeholder="Enter email address"
+              value={createForm.email}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, email: e.target.value }))}
+              required
+            />
+            <Input
+              label="Password"
+              type="text"
+              placeholder="Enter password"
+              value={createForm.password}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, password: e.target.value }))}
+              required
+            />
+            <Select
+              label="Role"
+              options={roleOptions}
+              value={createForm.role}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, role: e.target.value }))}
+            />
+            <Select
+              label="Status"
+              options={[
+                { value: 'active', label: 'Active' },
+                { value: 'inactive', label: 'Inactive' },
+              ]}
+              value={createForm.status}
+              onChange={(e) => setCreateForm((prev) => ({ ...prev, status: e.target.value }))}
+            />
+          </FormSection>
+
+          <FormSection title="Permissions">
+            <p className="permissions-note">All permissions are optional. Leave unchecked to deny access.</p>
+            <div className="permissions-grid">
+              {permissionOptions.map((perm) => (
+                <label key={perm.key} className="permission-checkbox">
+                  <input
+                    type="checkbox"
+                    checked={createForm.permissions[perm.key] || false}
+                    onChange={(e) => handleCreatePermissionChange(perm.key, e.target.checked)}
+                  />
+                  <span>{perm.label}</span>
+                </label>
+              ))}
+            </div>
+          </FormSection>
+
+          <div className="modal-form-actions">
+            <Button type="button" variant="secondary" onClick={() => { setShowCreateModal(false); resetCreateForm(); }}>Cancel</Button>
+            <Button type="submit">Create User</Button>
+          </div>
+        </form>
+      </Modal>
+
+      <Modal open={showResetModal} onClose={() => setShowResetModal(false)} title="Reset All Data">
+        <div className="reset-warning">
+          <p className="reset-warning-text">
+            <strong>Warning:</strong> This action will permanently reset all application data to zero.
+          </p>
+          <ul className="reset-warning-list">
+            <li>All registers will be deleted</li>
+            <li>All purchases, sales, expenses, and payments will be deleted</li>
+            <li>All audit logs will be deleted</li>
+            <li>All settings will be reset to default</li>
+          </ul>
+          <p className="reset-warning-exception">
+            <strong>Note:</strong> User credentials will <em>not</em> be affected.
+          </p>
+          <p className="reset-warning-confirm">
+            Are you sure you want to continue?
+          </p>
+        </div>
+        <div className="modal-form-actions">
+          <Button variant="secondary" onClick={() => setShowResetModal(false)}>Cancel</Button>
+          <Button variant="danger" onClick={handleResetAll}>Yes, Reset Everything</Button>
+        </div>
+      </Modal>
     </div>
   )
 }

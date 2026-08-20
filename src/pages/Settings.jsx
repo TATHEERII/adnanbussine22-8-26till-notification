@@ -1,9 +1,11 @@
 import { useState } from 'react'
+import { Navigate } from 'react-router-dom'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
+import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import './Settings.css'
 
@@ -34,6 +36,11 @@ const defaultSettings = {
 }
 
 export default function Settings() {
+  const current = useAuth()
+  if (current?.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />
+  }
+
   const [settings, setSettings] = useLocalStorageState('importbiz_v2_settings', defaultSettings)
   const [formData, setFormData] = useState({ ...settings })
   const [saved, setSaved] = useState(false)

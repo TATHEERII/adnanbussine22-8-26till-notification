@@ -36,6 +36,18 @@ function ProtectedRoute({ user, onLogout }) {
   return <Layout user={user} onLogout={onLogout} />
 }
 
+function AdminRoute({ user, children }) {
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role !== 'admin') return <Navigate to="/dashboard" replace />
+  return children
+}
+
+function UserRoute({ user, children }) {
+  if (!user) return <Navigate to="/login" replace />
+  if (user.role === 'admin') return <Navigate to="/settings" replace />
+  return children
+}
+
 export default function App() {
   const [user, setUser] = useState(getStoredUser)
 
@@ -56,19 +68,42 @@ export default function App() {
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />} />
         <Route path="/" element={<ProtectedRoute user={user} onLogout={handleLogout} />}>
-          <Route index element={<Dashboard />} />
-          <Route path="dashboard" element={<Dashboard />} />
-          <Route path="registers" element={<Registers />} />
-          <Route path="purchase" element={<Purchase />} />
-          <Route path="sales" element={<Sales />} />
-          <Route path="expenses" element={<Expenses />} />
-          <Route path="payments" element={<Payments />} />
-          <Route path="account-ledger" element={<AccountLedger />} />
-          <Route path="approvals" element={<Approvals />} />
-          <Route path="reports" element={<Reports />} />
-          <Route path="audit-log" element={<AuditLog />} />
-          <Route path="admin" element={<AdminUsers />} />
-          <Route path="settings" element={<Settings />} />
+          <Route path="dashboard" element={
+            <UserRoute user={user}><Dashboard /></UserRoute>
+          } />
+          <Route path="registers" element={
+            <UserRoute user={user}><Registers /></UserRoute>
+          } />
+          <Route path="purchase" element={
+            <UserRoute user={user}><Purchase /></UserRoute>
+          } />
+          <Route path="sales" element={
+            <UserRoute user={user}><Sales /></UserRoute>
+          } />
+          <Route path="expenses" element={
+            <UserRoute user={user}><Expenses /></UserRoute>
+          } />
+          <Route path="payments" element={
+            <UserRoute user={user}><Payments /></UserRoute>
+          } />
+          <Route path="account-ledger" element={
+            <UserRoute user={user}><AccountLedger /></UserRoute>
+          } />
+          <Route path="approvals" element={
+            <UserRoute user={user}><Approvals /></UserRoute>
+          } />
+          <Route path="reports" element={
+            <UserRoute user={user}><Reports /></UserRoute>
+          } />
+          <Route path="audit-log" element={
+            <UserRoute user={user}><AuditLog /></UserRoute>
+          } />
+          <Route path="admin" element={
+            <AdminRoute user={user}><AdminUsers /></AdminRoute>
+          } />
+          <Route path="settings" element={
+            <AdminRoute user={user}><Settings /></AdminRoute>
+          } />
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
