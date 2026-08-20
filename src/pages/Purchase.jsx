@@ -11,6 +11,7 @@ import Table from '../components/ui/Table'
 import { mockPurchases, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useAuditLog } from '../hooks/useAuditLog'
 import './Purchase.css'
 
 const statusOptions = [
@@ -74,6 +75,7 @@ export default function Purchase() {
   })
 
   const current = useAuth()
+  const { addLog } = useAuditLog()
 
   const activeRegisters = useMemo(() => {
     return registers.filter((r) => r.status === 'active')
@@ -132,6 +134,7 @@ export default function Purchase() {
     }
 
     setPurchases((prev) => [newPurchase, ...prev])
+    addLog({ user: current.name, action: 'Purchase Created', module: 'Purchases', reference: newPurchase.purchaseNumber, register: selectedReg ? selectedReg.name : '', description: `Created purchase for ${newPurchase.supplierName}`, oldStatus: '-', newStatus: 'Draft' })
     resetForm()
     setShowCreateModal(false)
   }
@@ -176,19 +179,25 @@ export default function Purchase() {
   }
 
   const handleSubmit = (purchaseId) => {
+    const purchase = purchases.find((p) => p.id === purchaseId)
+    if (!purchase) return
     setPurchases((prev) =>
       prev.map((p) =>
         p.id === purchaseId ? { ...p, status: 'pending' } : p
       )
     )
+    addLog({ user: current.name, action: 'Purchase Submitted', module: 'Purchases', reference: purchase.purchaseNumber, register: purchase.register, description: 'Submitted purchase for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
   }
 
   const handleApprove = (purchaseId) => {
+    const purchase = purchases.find((p) => p.id === purchaseId)
+    if (!purchase) return
     setPurchases((prev) =>
       prev.map((p) =>
         p.id === purchaseId ? { ...p, status: 'approved', rejectionReason: '' } : p
       )
     )
+    addLog({ user: current.name, action: 'Purchase Approved', module: 'Purchases', reference: purchase.purchaseNumber, register: purchase.register, description: 'Approved purchase order', oldStatus: 'Pending Approval', newStatus: 'Approved' })
     setShowViewModal(false)
     setSelectedPurchase(null)
   }
@@ -204,6 +213,7 @@ export default function Purchase() {
           : p
       )
     )
+    addLog({ user: current.name, action: 'Purchase Rejected', module: 'Purchases', reference: selectedPurchase.purchaseNumber, register: selectedPurchase.register, description: 'Rejected purchase order', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
     setRejectionReason('')
     setShowRejectModal(false)
     setShowViewModal(false)

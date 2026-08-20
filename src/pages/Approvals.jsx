@@ -8,6 +8,7 @@ import Table from '../components/ui/Table'
 import { mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useAuditLog } from '../hooks/useAuditLog'
 import './Approvals.css'
 
 const statusVariant = (status) => {
@@ -44,6 +45,7 @@ export default function Approvals() {
   const [payments, setPayments] = useLocalStorageState('importbiz_v2_payments', [])
 
   const current = useAuth()
+  const { addLog } = useAuditLog()
 
   const [activeTab, setActiveTab] = useState('registers')
   const [showViewModal, setShowViewModal] = useState(false)
@@ -92,26 +94,31 @@ export default function Approvals() {
         setRegisters((prev) =>
           prev.map((r) => (r.id === id ? { ...r, status: 'active', rejectionReason: '' } : r))
         )
+        addLog({ user: current.name, action: 'Register Approved', module: 'Registers', reference: `REG-${item.id.replace('r', '').padStart(5, '0')}`, register: '-', description: 'Approved register request', oldStatus: 'Pending Approval', newStatus: 'Active' })
         break
       case 'purchase':
         setPurchases((prev) =>
           prev.map((p) => (p.id === id ? { ...p, status: 'approved', rejectionReason: '' } : p))
         )
+        addLog({ user: current.name, action: 'Purchase Approved', module: 'Purchases', reference: item.purchaseNumber, register: item.register, description: 'Approved purchase order', oldStatus: 'Pending Approval', newStatus: 'Approved' })
         break
       case 'sale':
         setSales((prev) =>
           prev.map((s) => (s.id === id ? { ...s, status: 'approved', rejectionReason: '' } : s))
         )
+        addLog({ user: current.name, action: 'Sale Approved', module: 'Sales', reference: item.saleNumber, register: item.register, description: 'Approved sale record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
         break
       case 'expense':
         setExpenses((prev) =>
           prev.map((e) => (e.id === id ? { ...e, status: 'approved', rejectionReason: '' } : e))
         )
+        addLog({ user: current.name, action: 'Expense Approved', module: 'Expenses', reference: item.expenseNumber, register: item.register, description: 'Approved expense record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
         break
       case 'payment':
         setPayments((prev) =>
           prev.map((pm) => (pm.id === id ? { ...pm, status: 'approved', rejectionReason: '' } : pm))
         )
+        addLog({ user: current.name, action: 'Payment Approved', module: 'Payments', reference: item.paymentNumber, register: item.register, description: 'Approved payment record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
         break
       default:
         break
@@ -132,26 +139,31 @@ export default function Approvals() {
         setRegisters((prev) =>
           prev.map((r) => (r.id === id ? { ...r, status: 'rejected', rejectionReason: rejectionReason.trim() } : r))
         )
+        addLog({ user: current.name, action: 'Register Rejected', module: 'Registers', reference: `REG-${item.id.replace('r', '').padStart(5, '0')}`, register: '-', description: 'Rejected register request', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
         break
       case 'purchase':
         setPurchases((prev) =>
           prev.map((p) => (p.id === id ? { ...p, status: 'rejected', rejectionReason: rejectionReason.trim() } : p))
         )
+        addLog({ user: current.name, action: 'Purchase Rejected', module: 'Purchases', reference: item.purchaseNumber, register: item.register, description: 'Rejected purchase order', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
         break
       case 'sale':
         setSales((prev) =>
           prev.map((s) => (s.id === id ? { ...s, status: 'rejected', rejectionReason: rejectionReason.trim() } : s))
         )
+        addLog({ user: current.name, action: 'Sale Rejected', module: 'Sales', reference: item.saleNumber, register: item.register, description: 'Rejected sale record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
         break
       case 'expense':
         setExpenses((prev) =>
           prev.map((e) => (e.id === id ? { ...e, status: 'rejected', rejectionReason: rejectionReason.trim() } : e))
         )
+        addLog({ user: current.name, action: 'Expense Rejected', module: 'Expenses', reference: item.expenseNumber, register: item.register, description: 'Rejected expense record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
         break
       case 'payment':
         setPayments((prev) =>
           prev.map((pm) => (pm.id === id ? { ...pm, status: 'rejected', rejectionReason: rejectionReason.trim() } : pm))
         )
+        addLog({ user: current.name, action: 'Payment Rejected', module: 'Payments', reference: item.paymentNumber, register: item.register, description: 'Rejected payment record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
         break
       default:
         break

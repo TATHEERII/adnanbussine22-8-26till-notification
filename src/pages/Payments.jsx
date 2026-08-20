@@ -11,6 +11,7 @@ import Table from '../components/ui/Table'
 import { mockPayments, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useAuditLog } from '../hooks/useAuditLog'
 import './Payments.css'
 
 const paymentTypeOptions = [
@@ -88,6 +89,7 @@ export default function Payments() {
   })
 
   const current = useAuth()
+  const { addLog } = useAuditLog()
 
   const activeRegisters = useMemo(() => {
     return registers.filter((r) => r.status === 'active')
@@ -154,6 +156,7 @@ export default function Payments() {
     }
 
     setPayments((prev) => [newPayment, ...prev])
+    addLog({ user: current.name, action: 'Payment Created', module: 'Payments', reference: newPayment.paymentNumber, register: selectedReg ? selectedReg.name : '', description: newPayment.description || `Payment ${newPayment.type} to ${newPayment.partyName}`, oldStatus: '-', newStatus: 'Draft' })
     resetForm()
     setShowCreateModal(false)
   }
@@ -204,19 +207,25 @@ export default function Payments() {
   }
 
   const handleSubmit = (paymentId) => {
+    const payment = payments.find((pm) => pm.id === paymentId)
+    if (!payment) return
     setPayments((prev) =>
       prev.map((pm) =>
         pm.id === paymentId ? { ...pm, status: 'pending' } : pm
       )
     )
+    addLog({ user: current.name, action: 'Payment Submitted', module: 'Payments', reference: payment.paymentNumber, register: payment.register, description: 'Submitted payment for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
   }
 
   const handleApprove = (paymentId) => {
+    const payment = payments.find((pm) => pm.id === paymentId)
+    if (!payment) return
     setPayments((prev) =>
       prev.map((pm) =>
         pm.id === paymentId ? { ...pm, status: 'approved', rejectionReason: '' } : pm
       )
     )
+    addLog({ user: current.name, action: 'Payment Approved', module: 'Payments', reference: payment.paymentNumber, register: payment.register, description: 'Approved payment record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
     setShowViewModal(false)
     setSelectedPayment(null)
   }
@@ -232,6 +241,7 @@ export default function Payments() {
           : pm
       )
     )
+    addLog({ user: current.name, action: 'Payment Rejected', module: 'Payments', reference: selectedPayment.paymentNumber, register: selectedPayment.register, description: 'Rejected payment record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
     setRejectionReason('')
     setShowRejectModal(false)
     setShowViewModal(false)

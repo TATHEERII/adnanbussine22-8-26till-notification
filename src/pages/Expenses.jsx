@@ -11,6 +11,7 @@ import Table from '../components/ui/Table'
 import { mockExpenses, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useAuditLog } from '../hooks/useAuditLog'
 import './Expenses.css'
 
 const expenseCategories = [
@@ -91,6 +92,7 @@ export default function Expenses() {
   })
 
   const current = useAuth()
+  const { addLog } = useAuditLog()
 
   const activeRegisters = useMemo(() => {
     return registers.filter((r) => r.status === 'active')
@@ -152,6 +154,7 @@ export default function Expenses() {
     }
 
     setExpenses((prev) => [newExpense, ...prev])
+    addLog({ user: current.name, action: 'Expense Created', module: 'Expenses', reference: newExpense.expenseNumber, register: selectedReg ? selectedReg.name : '', description: newExpense.description, oldStatus: '-', newStatus: 'Draft' })
     resetForm()
     setShowCreateModal(false)
   }
@@ -198,19 +201,25 @@ export default function Expenses() {
   }
 
   const handleSubmit = (expenseId) => {
+    const expense = expenses.find((ex) => ex.id === expenseId)
+    if (!expense) return
     setExpenses((prev) =>
       prev.map((ex) =>
         ex.id === expenseId ? { ...ex, status: 'pending' } : ex
       )
     )
+    addLog({ user: current.name, action: 'Expense Submitted', module: 'Expenses', reference: expense.expenseNumber, register: expense.register, description: 'Submitted expense for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
   }
 
   const handleApprove = (expenseId) => {
+    const expense = expenses.find((ex) => ex.id === expenseId)
+    if (!expense) return
     setExpenses((prev) =>
       prev.map((ex) =>
         ex.id === expenseId ? { ...ex, status: 'approved', rejectionReason: '' } : ex
       )
     )
+    addLog({ user: current.name, action: 'Expense Approved', module: 'Expenses', reference: expense.expenseNumber, register: expense.register, description: 'Approved expense record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
     setShowViewModal(false)
     setSelectedExpense(null)
   }
@@ -226,6 +235,7 @@ export default function Expenses() {
           : ex
       )
     )
+    addLog({ user: current.name, action: 'Expense Rejected', module: 'Expenses', reference: selectedExpense.expenseNumber, register: selectedExpense.register, description: 'Rejected expense record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
     setRejectionReason('')
     setShowRejectModal(false)
     setShowViewModal(false)

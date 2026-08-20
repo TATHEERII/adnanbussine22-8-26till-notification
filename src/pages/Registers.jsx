@@ -11,6 +11,7 @@ import Table from '../components/ui/Table'
 import { mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useAuditLog } from '../hooks/useAuditLog'
 import './Registers.css'
 
 const registerTypes = [
@@ -69,6 +70,7 @@ export default function Registers() {
   })
 
   const current = useAuth()
+  const { addLog } = useAuditLog()
 
   const filtered = useMemo(() => {
     return registers.filter((r) => {
@@ -104,6 +106,7 @@ export default function Registers() {
     }
 
     setRegisters((prev) => [newRegister, ...prev])
+    addLog({ user: current.name, action: 'Register Created', module: 'Registers', reference: `REG-${newRegister.id.replace('r', '').padStart(5, '0')}`, register: newRegister.name, description: 'Created new register', oldStatus: '-', newStatus: 'Draft' })
     resetForm()
     setShowCreateModal(false)
   }
@@ -147,6 +150,7 @@ export default function Registers() {
         r.id === registerId ? { ...r, status: 'pending' } : r
       )
     )
+    addLog({ user: current.name, action: 'Register Submitted', module: 'Registers', reference: `REG-${registerId.replace('r', '').padStart(5, '0')}`, register: '', description: 'Submitted register for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
   }
 
   const handleApprove = (registerId) => {
@@ -155,6 +159,7 @@ export default function Registers() {
         r.id === registerId ? { ...r, status: 'active', rejectionReason: '' } : r
       )
     )
+    addLog({ user: current.name, action: 'Register Approved', module: 'Registers', reference: `REG-${registerId.replace('r', '').padStart(5, '0')}`, register: '', description: 'Approved register request', oldStatus: 'Pending Approval', newStatus: 'Active' })
     setShowViewModal(false)
     setSelectedRegister(null)
   }
@@ -170,6 +175,7 @@ export default function Registers() {
           : r
       )
     )
+    addLog({ user: current.name, action: 'Register Rejected', module: 'Registers', reference: `REG-${selectedRegister.id.replace('r', '').padStart(5, '0')}`, register: '', description: 'Rejected register request', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
     setRejectionReason('')
     setShowRejectModal(false)
     setShowViewModal(false)

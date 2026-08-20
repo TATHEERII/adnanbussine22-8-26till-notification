@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { mockUsers, currentUser } from '../data/mockData'
+import { useAuditLog } from '../hooks/useAuditLog'
 import './Login.css'
 
 export default function Login({ onLogin }) {
@@ -8,6 +9,8 @@ export default function Login({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  const { addLog } = useAuditLog()
 
   const validate = () => {
     if (!username.trim() || !password.trim()) {
@@ -34,6 +37,7 @@ export default function Login({ onLogin }) {
     )
 
     if (matchedUser) {
+      addLog({ user: matchedUser.name, action: 'Login', module: 'Auth', reference: '-', register: '-', description: `${matchedUser.name} logged in`, oldStatus: '-', newStatus: '-' })
       onLogin?.(matchedUser)
     } else {
       setError('Invalid credentials. Please try again.')

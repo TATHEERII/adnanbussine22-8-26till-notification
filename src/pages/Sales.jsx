@@ -11,6 +11,7 @@ import Table from '../components/ui/Table'
 import { mockSales, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useAuditLog } from '../hooks/useAuditLog'
 import './Sales.css'
 
 const statusOptions = [
@@ -81,6 +82,7 @@ export default function Sales() {
   })
 
   const current = useAuth()
+  const { addLog } = useAuditLog()
 
   const activeRegisters = useMemo(() => {
     return registers.filter((r) => r.status === 'active')
@@ -141,6 +143,7 @@ export default function Sales() {
     }
 
     setSales((prev) => [newSale, ...prev])
+    addLog({ user: current.name, action: 'Sale Created', module: 'Sales', reference: newSale.saleNumber, register: selectedReg ? selectedReg.name : '', description: `Created sale for ${newSale.customerName}`, oldStatus: '-', newStatus: 'Draft' })
     resetForm()
     setShowCreateModal(false)
   }
@@ -187,19 +190,25 @@ export default function Sales() {
   }
 
   const handleSubmit = (saleId) => {
+    const sale = sales.find((s) => s.id === saleId)
+    if (!sale) return
     setSales((prev) =>
       prev.map((s) =>
         s.id === saleId ? { ...s, status: 'pending' } : s
       )
     )
+    addLog({ user: current.name, action: 'Sale Submitted', module: 'Sales', reference: sale.saleNumber, register: sale.register, description: 'Submitted sale for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
   }
 
   const handleApprove = (saleId) => {
+    const sale = sales.find((s) => s.id === saleId)
+    if (!sale) return
     setSales((prev) =>
       prev.map((s) =>
         s.id === saleId ? { ...s, status: 'approved', rejectionReason: '' } : s
       )
     )
+    addLog({ user: current.name, action: 'Sale Approved', module: 'Sales', reference: sale.saleNumber, register: sale.register, description: 'Approved sale record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
     setShowViewModal(false)
     setSelectedSale(null)
   }
@@ -215,6 +224,7 @@ export default function Sales() {
           : s
       )
     )
+    addLog({ user: current.name, action: 'Sale Rejected', module: 'Sales', reference: selectedSale.saleNumber, register: selectedSale.register, description: 'Rejected sale record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
     setRejectionReason('')
     setShowRejectModal(false)
     setShowViewModal(false)
