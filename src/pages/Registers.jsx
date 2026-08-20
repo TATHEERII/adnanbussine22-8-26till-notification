@@ -8,9 +8,8 @@ import Modal from '../components/ui/Modal'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
 import FAB from '../components/ui/FAB'
-import { mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useData } from '../context/DataContext'
 import { useAuditLog } from '../hooks/useAuditLog'
 import './Registers.css'
 
@@ -53,7 +52,7 @@ export default function Registers() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const [registers, setRegisters] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
+  const { registers, setRegisters } = useData()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)

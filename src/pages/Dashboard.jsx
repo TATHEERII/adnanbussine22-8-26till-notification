@@ -3,8 +3,7 @@ import { useSettings } from '../context/SettingsContext'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Table from '../components/ui/Table'
-import { mockRegisters, mockApprovals } from '../data/mockData'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useData } from '../context/DataContext'
 import './Dashboard.css'
 
 const toLocalDate = (date) => {
@@ -68,12 +67,7 @@ export default function Dashboard() {
   const [customStart, setCustomStart] = useState(todayStr)
   const [customEnd, setCustomEnd] = useState(todayStr)
 
-  const [registers, setRegisters] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
-  const [purchases, setPurchases] = useLocalStorageState('importbiz_v2_purchases', [])
-  const [sales, setSales] = useLocalStorageState('importbiz_v2_sales', [])
-  const [expenses, setExpenses] = useLocalStorageState('importbiz_v2_expenses', [])
-  const [payments, setPayments] = useLocalStorageState('importbiz_v2_payments', [])
-  const [approvals, setApprovals] = useLocalStorageState('importbiz_v2_approvals', mockApprovals)
+  const { registers, setRegisters, purchases, setPurchases, sales, setSales, expenses, setExpenses, payments, setPayments, approvals, setApprovals } = useData()
 
   const safeArray = (val) => (Array.isArray(val) ? val : [])
 

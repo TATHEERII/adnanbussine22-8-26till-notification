@@ -4,9 +4,8 @@ import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
 import Modal from '../components/ui/Modal'
 import Table from '../components/ui/Table'
-import { mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useData } from '../context/DataContext'
 import { useAuditLog } from '../hooks/useAuditLog'
 import './Approvals.css'
 
@@ -37,11 +36,7 @@ export default function Approvals() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const [registers, setRegisters] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
-  const [purchases, setPurchases] = useLocalStorageState('importbiz_v2_purchases', [])
-  const [sales, setSales] = useLocalStorageState('importbiz_v2_sales', [])
-  const [expenses, setExpenses] = useLocalStorageState('importbiz_v2_expenses', [])
-  const [payments, setPayments] = useLocalStorageState('importbiz_v2_payments', [])
+  const { registers, setRegisters, purchases, setPurchases, sales, setSales, expenses, setExpenses, payments, setPayments } = useData()
 
   const current = useAuth()
   const { addLog } = useAuditLog()

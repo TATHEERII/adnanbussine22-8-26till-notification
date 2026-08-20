@@ -4,9 +4,8 @@ import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Modal from '../ui/Modal'
-import { useLocalStorageState } from '../../hooks/useLocalStorageState'
 import { useAuditLog } from '../../hooks/useAuditLog'
-import { mockRegisters } from '../../data/mockData'
+import { useData } from '../../context/DataContext'
 import './ApprovalBell.css'
 
 const typeIcons = {
@@ -56,11 +55,7 @@ export default function ApprovalBell({ user }) {
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
 
-  const [registers, setRegisters] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
-  const [purchases, setPurchases] = useLocalStorageState('importbiz_v2_purchases', [])
-  const [sales, setSales] = useLocalStorageState('importbiz_v2_sales', [])
-  const [expenses, setExpenses] = useLocalStorageState('importbiz_v2_expenses', [])
-  const [payments, setPayments] = useLocalStorageState('importbiz_v2_payments', [])
+  const { registers, setRegisters, purchases, setPurchases, sales, setSales, expenses, setExpenses, payments, setPayments } = useData()
 
   const { addLog } = useAuditLog()
 

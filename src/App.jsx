@@ -17,6 +17,7 @@ import { useState, useEffect } from 'react'
 import { currentUser, mockUsers } from './data/mockData'
 import { AuthProvider } from './context/AuthContext'
 import { SettingsProvider } from './context/SettingsContext'
+import { DataProvider } from './context/DataContext'
 
 const STORAGE_KEY = 'importbiz_v2_auth_user'
 
@@ -65,6 +66,7 @@ export default function App() {
   return (
     <BrowserRouter>
       <SettingsProvider>
+      <DataProvider>
       <Routes>
         <Route path="/login" element={user ? <Navigate to="/dashboard" replace /> : <Login onLogin={handleLogin} />} />
         <Route path="/" element={<ProtectedRoute user={user} onLogout={handleLogout} />}>
@@ -107,6 +109,7 @@ export default function App() {
         </Route>
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
+      </DataProvider>
       </SettingsProvider>
     </BrowserRouter>
   )

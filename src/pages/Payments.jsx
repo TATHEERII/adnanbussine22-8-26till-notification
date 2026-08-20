@@ -8,9 +8,8 @@ import Modal from '../components/ui/Modal'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
 import FAB from '../components/ui/FAB'
-import { mockPayments, mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useData } from '../context/DataContext'
 import { useAuditLog } from '../hooks/useAuditLog'
 import './Payments.css'
 
@@ -63,8 +62,7 @@ export default function Payments() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const [payments, setPayments] = useLocalStorageState('importbiz_v2_payments', mockPayments)
-  const [registers] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
+  const { payments, setPayments, registers } = useData()
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [registerFilter, setRegisterFilter] = useState('')

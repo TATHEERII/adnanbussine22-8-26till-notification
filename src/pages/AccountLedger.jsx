@@ -5,8 +5,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Table from '../components/ui/Table'
-import { mockRegisters } from '../data/mockData'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useData } from '../context/DataContext'
 import './AccountLedger.css'
 
 const transactionTypeOptions = [
@@ -51,11 +50,7 @@ export default function AccountLedger() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const [registers] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
-  const [purchases] = useLocalStorageState('importbiz_v2_purchases', [])
-  const [sales] = useLocalStorageState('importbiz_v2_sales', [])
-  const [expenses] = useLocalStorageState('importbiz_v2_expenses', [])
-  const [payments] = useLocalStorageState('importbiz_v2_payments', [])
+  const { registers, purchases, sales, expenses, payments } = useData()
 
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState('')
