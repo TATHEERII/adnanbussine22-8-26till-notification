@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import FormLayout from '../components/ui/FormLayout'
+import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Button from '../components/ui/Button'

@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useSettings } from '../context/SettingsContext'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -8,11 +9,6 @@ import { mockRegisters } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
 import { useLocalStorageState } from '../hooks/useLocalStorageState'
 import './Approvals.css'
-
-const formatCurrency = (amount) => {
-  const num = Number(amount) || 0
-  return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
 
 const statusVariant = (status) => {
   switch (status) {
@@ -34,6 +30,13 @@ const formatDate = (dateStr) => {
 }
 
 export default function Approvals() {
+  const { currencySymbol } = useSettings()
+
+  const formatCurrency = (amount) => {
+    const num = Number(amount) || 0
+    return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   const [registers, setRegisters] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
   const [purchases, setPurchases] = useLocalStorageState('importbiz_v2_purchases', [])
   const [sales, setSales] = useLocalStorageState('importbiz_v2_sales', [])

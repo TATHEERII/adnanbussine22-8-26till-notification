@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useSettings } from '../context/SettingsContext'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -18,11 +19,6 @@ const reportTabs = [
   { key: 'registers', label: 'Register Summary' },
 ]
 
-const formatCurrency = (amount) => {
-  const num = Number(amount) || 0
-  return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
 const formatDate = (dateStr) => {
   if (!dateStr) return '-'
   const date = new Date(dateStr)
@@ -30,6 +26,13 @@ const formatDate = (dateStr) => {
 }
 
 export default function Reports() {
+  const { currencySymbol } = useSettings()
+
+  const formatCurrency = (amount) => {
+    const num = Number(amount) || 0
+    return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   const [registers] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
   const [purchases] = useLocalStorageState('importbiz_v2_purchases', [])
   const [sales] = useLocalStorageState('importbiz_v2_sales', [])

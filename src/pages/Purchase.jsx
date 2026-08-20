@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useSettings } from '../context/SettingsContext'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -19,11 +20,6 @@ const statusOptions = [
   { value: 'approved', label: 'Approved' },
   { value: 'rejected', label: 'Rejected' },
 ]
-
-const formatCurrency = (amount) => {
-  const num = Number(amount) || 0
-  return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
 
 const statusVariant = (status) => {
   switch (status) {
@@ -49,6 +45,13 @@ const generatePurchaseNumber = (purchases) => {
 }
 
 export default function Purchase() {
+  const { currencySymbol } = useSettings()
+
+  const formatCurrency = (amount) => {
+    const num = Number(amount) || 0
+    return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   const [purchases, setPurchases] = useLocalStorageState('importbiz_v2_purchases', mockPurchases)
   const [registers] = useLocalStorageState('importbiz_v2_registers', mockRegisters)
   const [search, setSearch] = useState('')

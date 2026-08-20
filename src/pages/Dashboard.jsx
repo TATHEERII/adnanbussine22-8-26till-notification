@@ -1,4 +1,5 @@
 import { useState, useMemo } from 'react'
+import { useSettings } from '../context/SettingsContext'
 import Card from '../components/ui/Card'
 import Badge from '../components/ui/Badge'
 import Table from '../components/ui/Table'
@@ -42,11 +43,6 @@ const getMonthRange = () => {
 const weekRange = getWeekRange()
 const monthRange = getMonthRange()
 
-const formatCurrency = (amount) => {
-  const num = Number(amount) || 0
-  return `$${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-}
-
 const statusVariant = (status) => {
   switch (status) {
     case 'approved':
@@ -61,6 +57,13 @@ const statusVariant = (status) => {
 }
 
 export default function Dashboard() {
+  const { currencySymbol } = useSettings()
+
+  const formatCurrency = (amount) => {
+    const num = Number(amount) || 0
+    return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
   const [dateFilter, setDateFilter] = useState('month')
   const [customStart, setCustomStart] = useState(todayStr)
   const [customEnd, setCustomEnd] = useState(todayStr)
