@@ -1,0 +1,23 @@
+name = "importbiz-api"
+main = "src/worker/index.js"
+compatibility_date = "2025-01-01"
+compatibility_flags = ["nodejs_compat"]
+
+# D1 Database binding
+[[d1_databases]]
+binding = "DB"
+database_name = "importbiz-db"
+database_id = "be4173b3-afa1-4075-82e0-2c31c46005c8"
+
+# KV Namespace bindings
+[[kv_namespaces]]
+binding = "SESSIONS_V2"
+id = "3708e87e2b184d8092fec26d36e78e0a"
+
+[[kv_namespaces]]
+binding = "CACHE_V2"
+id = "2cf5def6ccde4d59a9f7dce6ef459fbd"
+
+[vars]
+ENVIRONMENT = "production"
+JWT_SECRET = "ee8d37f2627a8150af78944d1d5993639d3511ca5939890ad35ead0ff7ecf6af"

@@ -1,0 +1,1 @@
+UPDATE users SET permissions='{"canCreateRegister":true,"canCreatePurchase":true,"canCreateSale":true,"canCreateExpense":true,"canCreatePayment":true,"canApprove":true,"canViewReports":true,"canViewAuditLog":true}' WHERE username='admin';

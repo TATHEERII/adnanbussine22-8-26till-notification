@@ -1,7 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
-import { mockUsers } from '../data/mockData'
-import { useAuditLog } from '../hooks/useAuditLog'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+﻿import { useState, useEffect } from 'react'
 import './Login.css'
 
 export default function Login({ onLogin }) {
@@ -10,26 +7,6 @@ export default function Login({ onLogin }) {
   const [showPassword, setShowPassword] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
-
-  const [storedUsers, setStoredUsers] = useLocalStorageState('importbiz_v2_users', [])
-
-  const { addLog } = useAuditLog()
-
-  useEffect(() => {
-    const cleaned = Array.isArray(storedUsers) ? storedUsers.filter((u) => u.password) : []
-    if (cleaned.length !== storedUsers.length) {
-      setStoredUsers(cleaned)
-    }
-  }, [storedUsers, setStoredUsers])
-
-  const allUsers = useMemo(() => {
-    const local = Array.isArray(storedUsers) ? storedUsers : []
-    const defaults = Array.isArray(mockUsers) ? mockUsers : []
-    const map = new Map()
-    defaults.forEach((u) => map.set(u.id, u))
-    local.forEach((u) => map.set(u.id, u))
-    return Array.from(map.values())
-  }, [storedUsers])
 
   const validate = () => {
     if (!username.trim() || !password.trim()) {
@@ -47,20 +24,13 @@ export default function Login({ onLogin }) {
 
     setLoading(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 800))
-
-    const matchedUser = allUsers.find(
-      (u) =>
-        (u.username.toLowerCase() === username.trim().toLowerCase() ||
-          u.email.toLowerCase() === username.trim().toLowerCase()) &&
-        u.password === password.trim()
-    )
-
-    if (matchedUser) {
-      addLog({ user: matchedUser.name, action: 'Login', module: 'Auth', reference: '-', register: '-', description: `${matchedUser.name} logged in`, oldStatus: '-', newStatus: '-' })
-      onLogin?.(matchedUser)
-    } else {
-      setError('Invalid credentials. Please try again.')
+    try {
+      const { login } = await import('../services/auth.js')
+      const user = await login(username.trim(), password.trim())
+      onLogin?.(user)
+    } catch (err) {
+      setError(err.message || 'Invalid credentials. Please try again.')
+    } finally {
       setLoading(false)
     }
   }
@@ -112,7 +82,7 @@ export default function Login({ onLogin }) {
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
           <p className="login-hint">
-            Mock authentication. Try <strong>admin</strong> or <strong>ali</strong>.
+            Use <strong>admin</strong> / <strong>admin123</strong>
           </p>
         </form>
       </div>
