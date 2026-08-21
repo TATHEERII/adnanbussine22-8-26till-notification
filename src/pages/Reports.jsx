@@ -25,7 +25,7 @@ const formatDate = (dateStr) => {
 }
 
 export default function Reports() {
-  const { currencySymbol } = useSettings()
+  const { currencySymbol, settings } = useSettings()
 
   const formatCurrency = (amount) => {
     const num = Number(amount) || 0
@@ -338,6 +338,31 @@ export default function Reports() {
       <div className="page-header">
         <h1 className="page-title">Reports</h1>
         <p className="page-subtitle">Generate and view business reports.</p>
+      </div>
+
+      <div className="reports-print-header">
+        <div className="reports-print-brand">
+          <strong>{settings.businessName || 'Import Business'}</strong>
+          {settings.address && <span>{settings.address}</span>}
+          {(settings.phone || settings.email) && (
+            <span>{[settings.phone, settings.email].filter(Boolean).join(' | ')}</span>
+          )}
+        </div>
+        <div className="reports-print-meta">
+          <div className="reports-print-title">{getReportTitle()}</div>
+          <div className="reports-print-filters">
+            {(dateFrom || dateTo) && (
+              <span>Period: {dateFrom || '...'} to {dateTo || '...'}</span>
+            )}
+            {registerFilter && (
+              <span>Register: {activeRegisters.find(r => r.id === registerFilter)?.name || 'All'}</span>
+            )}
+            {statusFilter && (
+              <span>Status: {statusFilter.charAt(0).toUpperCase() + statusFilter.slice(1)}</span>
+            )}
+            <span>Generated: {new Date().toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
+          </div>
+        </div>
       </div>
 
       <div className="reports-tabs">

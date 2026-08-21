@@ -53,7 +53,8 @@ const formatDate = (dateStr) => {
 export default function AuditLog() {
   const [auditLogs, setAuditLogs] = useLocalStorageState('importbiz_v2_audit_logs', mockAuditLogs)
   const [search, setSearch] = useState('')
-  const [dateFilter, setDateFilter] = useState('')
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
   const [moduleFilter, setModuleFilter] = useState('')
   const [actionFilter, setActionFilter] = useState('')
 
@@ -66,12 +67,12 @@ export default function AuditLog() {
         log.reference.toLowerCase().includes(search.toLowerCase()) ||
         log.description.toLowerCase().includes(search.toLowerCase()) ||
         log.register.toLowerCase().includes(search.toLowerCase())
-      const matchesDate = !dateFilter || log.date === dateFilter
+      const matchesDateRange = !dateFrom || !dateTo || (log.date >= dateFrom && log.date <= dateTo)
       const matchesModule = !moduleFilter || log.module === moduleFilter
       const matchesAction = !actionFilter || log.action.toLowerCase().includes(actionFilter.toLowerCase())
-      return matchesSearch && matchesDate && matchesModule && matchesAction
+      return matchesSearch && matchesDateRange && matchesModule && matchesAction
     })
-  }, [auditLogs, search, dateFilter, moduleFilter, actionFilter])
+  }, [auditLogs, search, dateFrom, dateTo, moduleFilter, actionFilter])
 
   const columns = [
     { key: 'user', label: 'User' },
@@ -114,9 +115,17 @@ export default function AuditLog() {
         />
         <Input
           type="date"
-          value={dateFilter}
-          onChange={(e) => setDateFilter(e.target.value)}
+          value={dateFrom}
+          onChange={(e) => setDateFrom(e.target.value)}
           className="audit-filter"
+          placeholder="From"
+        />
+        <Input
+          type="date"
+          value={dateTo}
+          onChange={(e) => setDateTo(e.target.value)}
+          className="audit-filter"
+          placeholder="To"
         />
         <Select
           options={moduleOptions}

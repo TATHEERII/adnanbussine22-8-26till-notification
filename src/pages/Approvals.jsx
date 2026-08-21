@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react'
 import { useSettings } from '../context/SettingsContext'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
+import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import Table from '../components/ui/Table'
 import { useAuth } from '../context/AuthContext'
@@ -41,7 +42,7 @@ export default function Approvals() {
   const current = useAuth()
   const { addLog } = useAuditLog()
 
-  const [activeTab, setActiveTab] = useState('registers')
+  const [activeTab, setActiveTab] = useState('')
   const [showViewModal, setShowViewModal] = useState(false)
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [selectedItem, setSelectedItem] = useState(null)
@@ -240,7 +241,13 @@ export default function Approvals() {
     { key: 'payments', label: 'Payments', count: pendingPayments.length },
   ]
 
+  const tabOptions = tabs.map((tab) => ({
+    value: tab.key,
+    label: `${tab.label} (${tab.count})`,
+  }))
+
   const getCurrentItems = () => {
+    if (!activeTab) return []
     switch (activeTab) {
       case 'registers':
         return pendingRegisters.map((r) => ({ ...r, type: 'register' }))
@@ -339,22 +346,19 @@ export default function Approvals() {
         <p className="page-subtitle">Review and approve pending requests from other users.</p>
       </div>
 
-      <div className="approvals-tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            className={`approvals-tab ${activeTab === tab.key ? 'approvals-tab-active' : ''}`}
-            onClick={() => setActiveTab(tab.key)}
-          >
-            {tab.label}
-            {tab.count > 0 && <span className="approvals-tab-count">{tab.count}</span>}
-          </button>
-        ))}
+      <div className="approvals-select-bar">
+        <Select
+          options={tabOptions}
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value)}
+          className="approvals-select"
+          placeholder="Select approval type"
+        />
       </div>
 
       <div className="approvals-content">
         <div className="approvals-content-header">
-          <h2 className="approvals-content-title">{`${tabs.find((t) => t.key === activeTab)?.label || 'Items'} Approvals`}</h2>
+          <h2 className="approvals-content-title">{activeTab ? `${tabs.find((t) => t.key === activeTab)?.label || 'Items'} Approvals` : 'Approvals'}</h2>
           <span className="approvals-content-subtitle">{currentItems.length} pending item{currentItems.length !== 1 ? 's' : ''}</span>
         </div>
         <Table columns={columns} data={currentItems} emptyText="No pending approvals found." cardViewOnMobile />

@@ -3,52 +3,13 @@
   margin: 0 auto;
 }
 
-.approvals-tabs {
-  display: flex;
-  gap: var(--space-xs);
+.approvals-select-bar {
   margin-bottom: var(--space-md);
-  flex-wrap: wrap;
 }
 
-.approvals-tab {
-  padding: var(--space-sm) var(--space-md);
-  border: none;
-  background: none;
-  font-size: var(--font-sm);
-  font-weight: 500;
-  color: var(--color-gray-500);
-  cursor: pointer;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  white-space: nowrap;
-  transition: all 0.15s;
-}
-
-.approvals-tab:hover {
-  color: var(--color-gray-700);
-}
-
-.approvals-tab-active {
-  color: var(--color-primary);
-  border-bottom-color: var(--color-primary);
-}
-
-.approvals-tab-count {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-left: var(--space-sm);
-  padding: 0.125rem 0.5rem;
-  border-radius: 9999px;
-  font-size: var(--font-xs);
-  font-weight: 600;
-  background-color: var(--color-gray-100);
-  color: var(--color-gray-600);
-}
-
-.approvals-tab-active .approvals-tab-count {
-  background-color: var(--color-primary-light);
-  color: var(--color-primary);
+.approvals-select {
+  width: 100%;
+  max-width: 320px;
 }
 
 .approval-ref {
@@ -203,20 +164,6 @@
 }
 
 @media (max-width: 768px) {
-  .approvals-tabs {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    gap: var(--space-xs);
-    margin-bottom: var(--space-md);
-  }
-
-  .approvals-tab {
-    flex-shrink: 0;
-    padding: var(--space-sm) var(--space-md);
-    font-size: var(--font-xs);
-  }
-
   .view-row {
     flex-direction: column;
     gap: var(--space-xs);
