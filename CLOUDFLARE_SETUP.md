@@ -10,6 +10,11 @@
 - [ ] Worker deployed to Cloudflare
 - [ ] Frontend connected to Worker
 
+## Local Development
+1. Start Worker: `npm run worker:dev` (http://127.0.0.1:8788)
+2. Start Frontend: `npm run dev` (http://localhost:5173)
+3. The `.env` file points the frontend to the local Worker
+
 ## Your KV Namespace IDs
 - SESSIONS_V2: `3708e87e2b184d8092fec26d36e78e0a`
 - CACHE_V2: `2cf5def6ccde4d59a9f7dce6ef459fbd`
@@ -42,6 +47,19 @@ curl -X POST http://127.0.0.1:8788/api/auth/login \
 npm run dev
 ```
 
+## Deployment
+The Worker serves both the API and the built frontend from a single URL.
+
+### 1. Build & Deploy
+```bash
+npm run deploy
+```
+
+This runs `vite build` then `wrangler deploy`. After deployment, wrangler prints the Worker URL.
+
+### 2. Open the Webapp
+Visit the URL printed by wrangler (e.g. `https://importbiz-api.<account>.workers.dev`).
+
 ## Next Steps (Phase 2)
 
 After verifying Phase 1 works:
@@ -66,7 +84,9 @@ After verifying Phase 1 works:
 - `src/worker/settings.js` — Placeholder
 - `src/worker/db/schema.sql` — D1 schema (all tables + indexes)
 - `src/worker/seed.js` — Seed script for admin + settings
-- `package.json` — Added wrangler scripts
+- `src/services/api.js` — API client using `VITE_API_URL` env var
+- `.env` — Local development config
+- `package.json` — Added deploy script
 - `CLOUDFLARE_SETUP.md` — This file
 
 ## Notes
@@ -74,3 +94,4 @@ After verifying Phase 1 works:
 - JWT secret is `dev-secret-change-in-production` — change before deploying
 - Sessions expire in 7 days in KV
 - Database schema includes: users, registers, purchases, sales, expenses, payments, audit_logs, settings, notifications, sync_queue, sync_conflicts
+- The Worker serves static frontend assets from the `dist/` directory via `[site]` bucket config
