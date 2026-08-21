@@ -22,5 +22,6 @@ id = "2cf5def6ccde4d59a9f7dce6ef459fbd"
 ENVIRONMENT = "production"
 JWT_SECRET = "ee8d37f2627a8150af78944d1d5993639d3511ca5939890ad35ead0ff7ecf6af"
 
-[site]
-bucket = "dist"
+[assets]
+directory = "dist"
+binding = "ASSETS"

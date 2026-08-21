@@ -1,4 +1,5 @@
 ﻿import { useState, useEffect } from 'react'
+import { login } from '../services/auth.js'
 import './Login.css'
 
 export default function Login({ onLogin }) {
@@ -25,7 +26,6 @@ export default function Login({ onLogin }) {
     setLoading(true)
 
     try {
-      const { login } = await import('../services/auth.js')
       const user = await login(username.trim(), password.trim())
       onLogin?.(user)
     } catch (err) {

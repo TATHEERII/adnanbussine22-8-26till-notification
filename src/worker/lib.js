@@ -75,3 +75,20 @@ export async function getSettings(env) {
   const settings = await env.DB.prepare('SELECT * FROM settings WHERE id = 1').first();
   return settings || null;
 }
+
+// Persist optional columns (e.g. `notes`, `paid_through`) that were added to
+// the schema after the initial deployment. This runs as a best-effort UPDATE
+// *after* the main INSERT/UPDATE so that writes never break if the column does
+// not exist yet on an older schema version — the data simply degrades to
+// non-persistent until the migration (`migrate_add_notes.sql`) is applied.
+export async function setOptionalColumns(env, table, id, fields) {
+  const cols = Object.keys(fields).filter((k) => fields[k] !== undefined);
+  if (cols.length === 0) return;
+  try {
+    const sets = cols.map((c) => `${c} = ?`);
+    const binds = cols.map((c) => (fields[c] === undefined ? null : fields[c]));
+    await env.DB.prepare(`UPDATE ${table} SET ${sets.join(', ')} WHERE id = ?`).bind(...binds, id).run();
+  } catch (_) {
+    // Column may not exist on this schema version — safe to ignore.
+  }
+}

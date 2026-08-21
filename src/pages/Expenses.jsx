@@ -10,7 +10,6 @@ import Table from '../components/ui/Table'
 import FAB from '../components/ui/FAB'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
-import { useAuditLog } from '../hooks/useAuditLog'
 import './Expenses.css'
 
 const expenseCategories = [
@@ -67,7 +66,7 @@ export default function Expenses() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const { expenses, setExpenses, registers } = useData()
+  const { expenses, createExpense, updateExpense, approveItem, rejectItem, registers } = useData()
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [categoryFilter, setCategoryFilter] = useState('')
@@ -90,7 +89,6 @@ export default function Expenses() {
   })
 
   const current = useAuth()
-  const { addLog } = useAuditLog()
 
   const activeRegisters = useMemo(() => {
     return registers.filter((r) => r.status === 'active')
@@ -129,32 +127,29 @@ export default function Expenses() {
     })
   }
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault()
     if (!formData.description.trim() || !formData.registerId || !formData.amount) return
 
-    const selectedReg = registers.find((r) => r.id === formData.registerId)
     const newExpense = {
-      id: `e${Date.now()}`,
       expenseNumber: generateExpenseNumber(expenses),
       date: formData.date,
-      register: selectedReg ? selectedReg.name : '',
       registerId: formData.registerId,
       category: formData.category,
       description: formData.description.trim(),
       amount: Number(formData.amount) || 0,
       paidThrough: formData.paidThrough,
-      status: 'draft',
-      createdBy: current.name,
-      createdById: current.id,
       notes: formData.notes.trim(),
-      rejectionReason: '',
+      status: 'draft',
     }
 
-    setExpenses((prev) => [newExpense, ...prev])
-    addLog({ user: current.name, action: 'Expense Created', module: 'Expenses', reference: newExpense.expenseNumber, register: selectedReg ? selectedReg.name : '', description: newExpense.description, oldStatus: '-', newStatus: 'Draft' })
-    resetForm()
-    setShowCreateModal(false)
+    try {
+      await createExpense(newExpense)
+      resetForm()
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to create expense')
+    }
   }
 
   const handleEditDraft = (expense) => {
@@ -171,73 +166,60 @@ export default function Expenses() {
     setShowCreateModal(true)
   }
 
-  const handleUpdateDraft = (e) => {
+  const handleUpdateDraft = async (e) => {
     e.preventDefault()
     if (!selectedExpense || !formData.description.trim() || !formData.registerId || !formData.amount) return
 
-    const selectedReg = registers.find((r) => r.id === formData.registerId)
-    setExpenses((prev) =>
-      prev.map((ex) =>
-        ex.id === selectedExpense.id
-          ? {
-              ...ex,
-              date: formData.date,
-              register: selectedReg ? selectedReg.name : '',
-              registerId: formData.registerId,
-              category: formData.category,
-              description: formData.description.trim(),
-              amount: Number(formData.amount) || 0,
-              paidThrough: formData.paidThrough,
-              notes: formData.notes.trim(),
-            }
-          : ex
-      )
-    )
-    resetForm()
-    setSelectedExpense(null)
-    setShowCreateModal(false)
+    try {
+      await updateExpense(selectedExpense.id, {
+        expenseNumber: selectedExpense.expenseNumber,
+        date: formData.date,
+        registerId: formData.registerId,
+        category: formData.category,
+        description: formData.description.trim(),
+        amount: Number(formData.amount) || 0,
+        paidThrough: formData.paidThrough,
+        notes: formData.notes.trim(),
+      })
+      resetForm()
+      setSelectedExpense(null)
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to update expense')
+    }
   }
 
-  const handleSubmit = (expenseId) => {
-    const expense = expenses.find((ex) => ex.id === expenseId)
-    if (!expense) return
-    setExpenses((prev) =>
-      prev.map((ex) =>
-        ex.id === expenseId ? { ...ex, status: 'pending' } : ex
-      )
-    )
-    addLog({ user: current.name, action: 'Expense Submitted', module: 'Expenses', reference: expense.expenseNumber, register: expense.register, description: 'Submitted expense for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
+  const handleSubmit = async (expenseId) => {
+    try {
+      await updateExpense(expenseId, { status: 'pending' })
+    } catch (err) {
+      alert(err.message || 'Failed to submit expense')
+    }
   }
 
-  const handleApprove = (expenseId) => {
-    const expense = expenses.find((ex) => ex.id === expenseId)
-    if (!expense) return
-    setExpenses((prev) =>
-      prev.map((ex) =>
-        ex.id === expenseId ? { ...ex, status: 'approved', rejectionReason: '' } : ex
-      )
-    )
-    addLog({ user: current.name, action: 'Expense Approved', module: 'Expenses', reference: expense.expenseNumber, register: expense.register, description: 'Approved expense record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
-    setShowViewModal(false)
-    setSelectedExpense(null)
+  const handleApprove = async (expenseId) => {
+    try {
+      await approveItem('expense', expenseId)
+      setShowViewModal(false)
+      setSelectedExpense(null)
+    } catch (err) {
+      alert(err.message || 'Failed to approve expense')
+    }
   }
 
-  const handleReject = (e) => {
+  const handleReject = async (e) => {
     e.preventDefault()
     if (!selectedExpense || !rejectionReason.trim()) return
 
-    setExpenses((prev) =>
-      prev.map((ex) =>
-        ex.id === selectedExpense.id
-          ? { ...ex, status: 'rejected', rejectionReason: rejectionReason.trim() }
-          : ex
-      )
-    )
-    addLog({ user: current.name, action: 'Expense Rejected', module: 'Expenses', reference: selectedExpense.expenseNumber, register: selectedExpense.register, description: 'Rejected expense record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-    setRejectionReason('')
-    setShowRejectModal(false)
-    setShowViewModal(false)
-    setSelectedExpense(null)
+    try {
+      await rejectItem('expense', selectedExpense.id, rejectionReason.trim())
+      setRejectionReason('')
+      setShowRejectModal(false)
+      setShowViewModal(false)
+      setSelectedExpense(null)
+    } catch (err) {
+      alert(err.message || 'Failed to reject expense')
+    }
   }
 
   const openView = (expense) => {

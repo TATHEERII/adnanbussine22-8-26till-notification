@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Input from '../components/ui/Input'
@@ -6,7 +6,7 @@ import Select from '../components/ui/Select'
 import Button from '../components/ui/Button'
 import Badge from '../components/ui/Badge'
 import { useAuth } from '../context/AuthContext'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useSettings } from '../context/SettingsContext'
 import './Settings.css'
 
 const currencyOptions = [
@@ -41,24 +41,38 @@ export default function Settings() {
     return <Navigate to="/dashboard" replace />
   }
 
-  const [settings, setSettings] = useLocalStorageState('importbiz_v2_settings', defaultSettings)
+  const { settings, setSettings } = useSettings()
   const [formData, setFormData] = useState({ ...settings })
   const [saved, setSaved] = useState(false)
+
+  // Keep the working copy in sync when settings arrive from the server.
+  useEffect(() => {
+    setFormData((prev) => ({ ...settings }))
+  }, [settings])
 
   const handleChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
     setSaved(false)
   }
 
-  const handleSave = () => {
-    setSettings(formData)
-    setSaved(true)
-    setTimeout(() => setSaved(false), 3000)
+  const handleSave = async () => {
+    try {
+      await setSettings(formData)
+      setSaved(true)
+      setTimeout(() => setSaved(false), 3000)
+    } catch (err) {
+      alert(err.message || 'Failed to save settings')
+    }
   }
 
-  const handleReset = () => {
-    setFormData({ ...defaultSettings })
-    setSettings(defaultSettings)
+  const handleReset = async () => {
+    const next = { ...defaultSettings }
+    setFormData(next)
+    try {
+      await setSettings(next)
+    } catch (err) {
+      alert(err.message || 'Failed to reset settings')
+    }
     setSaved(false)
   }
 

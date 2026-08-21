@@ -10,7 +10,6 @@ import Table from '../components/ui/Table'
 import FAB from '../components/ui/FAB'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
-import { useAuditLog } from '../hooks/useAuditLog'
 import './Registers.css'
 
 const registerTypes = [
@@ -52,7 +51,7 @@ export default function Registers() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const { registers, setRegisters } = useData()
+  const { registers, createRegister, updateRegister, approveItem, rejectItem } = useData()
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -69,7 +68,6 @@ export default function Registers() {
   })
 
   const current = useAuth()
-  const { addLog } = useAuditLog()
 
   const filtered = useMemo(() => {
     return registers.filter((r) => {
@@ -87,27 +85,25 @@ export default function Registers() {
     setFormData({ name: '', type: 'Import', openingBalance: '', description: '' })
   }
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault()
     if (!formData.name.trim()) return
 
     const newRegister = {
-      id: `r${Date.now()}`,
       name: formData.name.trim(),
-      owner: current.name,
-      ownerId: current.id,
       type: formData.type,
       openingBalance: Number(formData.openingBalance) || 0,
-      createdDate: new Date().toISOString().split('T')[0],
-      status: 'draft',
       description: formData.description.trim(),
-      rejectionReason: '',
+      status: 'draft',
     }
 
-    setRegisters((prev) => [newRegister, ...prev])
-    addLog({ user: current.name, action: 'Register Created', module: 'Registers', reference: `REG-${newRegister.id.replace('r', '').padStart(5, '0')}`, register: newRegister.name, description: 'Created new register', oldStatus: '-', newStatus: 'Draft' })
-    resetForm()
-    setShowCreateModal(false)
+    try {
+      await createRegister(newRegister)
+      resetForm()
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to create register')
+    }
   }
 
   const handleEditDraft = (register) => {
@@ -121,64 +117,56 @@ export default function Registers() {
     setShowCreateModal(true)
   }
 
-  const handleUpdateDraft = (e) => {
+  const handleUpdateDraft = async (e) => {
     e.preventDefault()
     if (!selectedRegister || !formData.name.trim()) return
 
-    setRegisters((prev) =>
-      prev.map((r) =>
-        r.id === selectedRegister.id
-          ? {
-              ...r,
-              name: formData.name.trim(),
-              type: formData.type,
-              openingBalance: Number(formData.openingBalance) || 0,
-              description: formData.description.trim(),
-            }
-          : r
-      )
-    )
-    resetForm()
-    setSelectedRegister(null)
-    setShowCreateModal(false)
+    try {
+      await updateRegister(selectedRegister.id, {
+        name: formData.name.trim(),
+        type: formData.type,
+        openingBalance: Number(formData.openingBalance) || 0,
+        description: formData.description.trim(),
+      })
+      resetForm()
+      setSelectedRegister(null)
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to update register')
+    }
   }
 
-  const handleSubmit = (registerId) => {
-    setRegisters((prev) =>
-      prev.map((r) =>
-        r.id === registerId ? { ...r, status: 'pending' } : r
-      )
-    )
-    addLog({ user: current.name, action: 'Register Submitted', module: 'Registers', reference: `REG-${registerId.replace('r', '').padStart(5, '0')}`, register: '', description: 'Submitted register for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
+  const handleSubmit = async (registerId) => {
+    try {
+      await updateRegister(registerId, { status: 'pending' })
+    } catch (err) {
+      alert(err.message || 'Failed to submit register')
+    }
   }
 
-  const handleApprove = (registerId) => {
-    setRegisters((prev) =>
-      prev.map((r) =>
-        r.id === registerId ? { ...r, status: 'active', rejectionReason: '' } : r
-      )
-    )
-    addLog({ user: current.name, action: 'Register Approved', module: 'Registers', reference: `REG-${registerId.replace('r', '').padStart(5, '0')}`, register: '', description: 'Approved register request', oldStatus: 'Pending Approval', newStatus: 'Active' })
-    setShowViewModal(false)
-    setSelectedRegister(null)
+  const handleApprove = async (registerId) => {
+    try {
+      await approveItem('register', registerId)
+      setShowViewModal(false)
+      setSelectedRegister(null)
+    } catch (err) {
+      alert(err.message || 'Failed to approve register')
+    }
   }
 
-  const handleReject = (e) => {
+  const handleReject = async (e) => {
     e.preventDefault()
     if (!selectedRegister || !rejectionReason.trim()) return
 
-    setRegisters((prev) =>
-      prev.map((r) =>
-        r.id === selectedRegister.id
-          ? { ...r, status: 'rejected', rejectionReason: rejectionReason.trim() }
-          : r
-      )
-    )
-    addLog({ user: current.name, action: 'Register Rejected', module: 'Registers', reference: `REG-${selectedRegister.id.replace('r', '').padStart(5, '0')}`, register: '', description: 'Rejected register request', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-    setRejectionReason('')
-    setShowRejectModal(false)
-    setShowViewModal(false)
-    setSelectedRegister(null)
+    try {
+      await rejectItem('register', selectedRegister.id, rejectionReason.trim())
+      setRejectionReason('')
+      setShowRejectModal(false)
+      setShowViewModal(false)
+      setSelectedRegister(null)
+    } catch (err) {
+      alert(err.message || 'Failed to reject register')
+    }
   }
 
   const openView = (register) => {

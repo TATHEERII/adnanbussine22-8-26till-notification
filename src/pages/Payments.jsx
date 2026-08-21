@@ -10,7 +10,6 @@ import Table from '../components/ui/Table'
 import FAB from '../components/ui/FAB'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
-import { useAuditLog } from '../hooks/useAuditLog'
 import './Payments.css'
 
 const paymentTypeOptions = [
@@ -62,7 +61,7 @@ export default function Payments() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const { payments, setPayments, registers } = useData()
+  const { payments, createPayment, updatePayment, approveItem, rejectItem, registers } = useData()
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [registerFilter, setRegisterFilter] = useState('')
@@ -87,7 +86,6 @@ export default function Payments() {
   })
 
   const current = useAuth()
-  const { addLog } = useAuditLog()
 
   const activeRegisters = useMemo(() => {
     return registers.filter((r) => r.status === 'active')
@@ -129,16 +127,13 @@ export default function Payments() {
     })
   }
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault()
     if (!formData.partyName.trim() || !formData.registerId || !formData.amount) return
 
-    const selectedReg = registers.find((r) => r.id === formData.registerId)
     const newPayment = {
-      id: `pm${Date.now()}`,
       paymentNumber: generatePaymentNumber(payments),
       date: formData.date,
-      register: selectedReg ? selectedReg.name : '',
       registerId: formData.registerId,
       type: formData.type,
       partyName: formData.partyName.trim(),
@@ -146,17 +141,17 @@ export default function Payments() {
       amount: Number(formData.amount) || 0,
       paymentMethod: formData.paymentMethod,
       description: formData.description.trim(),
-      status: 'draft',
-      createdBy: current.name,
-      createdById: current.id,
       notes: formData.notes.trim(),
-      rejectionReason: '',
+      status: 'draft',
     }
 
-    setPayments((prev) => [newPayment, ...prev])
-    addLog({ user: current.name, action: 'Payment Created', module: 'Payments', reference: newPayment.paymentNumber, register: selectedReg ? selectedReg.name : '', description: newPayment.description || `Payment ${newPayment.type} to ${newPayment.partyName}`, oldStatus: '-', newStatus: 'Draft' })
-    resetForm()
-    setShowCreateModal(false)
+    try {
+      await createPayment(newPayment)
+      resetForm()
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to create payment')
+    }
   }
 
   const handleEditDraft = (payment) => {
@@ -175,75 +170,62 @@ export default function Payments() {
     setShowCreateModal(true)
   }
 
-  const handleUpdateDraft = (e) => {
+  const handleUpdateDraft = async (e) => {
     e.preventDefault()
     if (!selectedPayment || !formData.partyName.trim() || !formData.registerId || !formData.amount) return
 
-    const selectedReg = registers.find((r) => r.id === formData.registerId)
-    setPayments((prev) =>
-      prev.map((pm) =>
-        pm.id === selectedPayment.id
-          ? {
-              ...pm,
-              date: formData.date,
-              register: selectedReg ? selectedReg.name : '',
-              registerId: formData.registerId,
-              type: formData.type,
-              partyName: formData.partyName.trim(),
-              reference: formData.reference.trim(),
-              amount: Number(formData.amount) || 0,
-              paymentMethod: formData.paymentMethod,
-              description: formData.description.trim(),
-              notes: formData.notes.trim(),
-            }
-          : pm
-      )
-    )
-    resetForm()
-    setSelectedPayment(null)
-    setShowCreateModal(false)
+    try {
+      await updatePayment(selectedPayment.id, {
+        paymentNumber: selectedPayment.paymentNumber,
+        date: formData.date,
+        registerId: formData.registerId,
+        type: formData.type,
+        partyName: formData.partyName.trim(),
+        reference: formData.reference.trim(),
+        amount: Number(formData.amount) || 0,
+        paymentMethod: formData.paymentMethod,
+        description: formData.description.trim(),
+        notes: formData.notes.trim(),
+      })
+      resetForm()
+      setSelectedPayment(null)
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to update payment')
+    }
   }
 
-  const handleSubmit = (paymentId) => {
-    const payment = payments.find((pm) => pm.id === paymentId)
-    if (!payment) return
-    setPayments((prev) =>
-      prev.map((pm) =>
-        pm.id === paymentId ? { ...pm, status: 'pending' } : pm
-      )
-    )
-    addLog({ user: current.name, action: 'Payment Submitted', module: 'Payments', reference: payment.paymentNumber, register: payment.register, description: 'Submitted payment for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
+  const handleSubmit = async (paymentId) => {
+    try {
+      await updatePayment(paymentId, { status: 'pending' })
+    } catch (err) {
+      alert(err.message || 'Failed to submit payment')
+    }
   }
 
-  const handleApprove = (paymentId) => {
-    const payment = payments.find((pm) => pm.id === paymentId)
-    if (!payment) return
-    setPayments((prev) =>
-      prev.map((pm) =>
-        pm.id === paymentId ? { ...pm, status: 'approved', rejectionReason: '' } : pm
-      )
-    )
-    addLog({ user: current.name, action: 'Payment Approved', module: 'Payments', reference: payment.paymentNumber, register: payment.register, description: 'Approved payment record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
-    setShowViewModal(false)
-    setSelectedPayment(null)
+  const handleApprove = async (paymentId) => {
+    try {
+      await approveItem('payment', paymentId)
+      setShowViewModal(false)
+      setSelectedPayment(null)
+    } catch (err) {
+      alert(err.message || 'Failed to approve payment')
+    }
   }
 
-  const handleReject = (e) => {
+  const handleReject = async (e) => {
     e.preventDefault()
     if (!selectedPayment || !rejectionReason.trim()) return
 
-    setPayments((prev) =>
-      prev.map((pm) =>
-        pm.id === selectedPayment.id
-          ? { ...pm, status: 'rejected', rejectionReason: rejectionReason.trim() }
-          : pm
-      )
-    )
-    addLog({ user: current.name, action: 'Payment Rejected', module: 'Payments', reference: selectedPayment.paymentNumber, register: selectedPayment.register, description: 'Rejected payment record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-    setRejectionReason('')
-    setShowRejectModal(false)
-    setShowViewModal(false)
-    setSelectedPayment(null)
+    try {
+      await rejectItem('payment', selectedPayment.id, rejectionReason.trim())
+      setRejectionReason('')
+      setShowRejectModal(false)
+      setShowViewModal(false)
+      setSelectedPayment(null)
+    } catch (err) {
+      alert(err.message || 'Failed to reject payment')
+    }
   }
 
   const openView = (payment) => {

@@ -1,4 +1,4 @@
-﻿import { verifySession, generateId, nowISO, createAuditLog } from './lib.js';
+﻿import { verifySession, generateId, nowISO, createAuditLog, setOptionalColumns } from './lib.js';
 
 export async function handleSales(request, env) {
   const url = new URL(request.url);
@@ -65,7 +65,9 @@ export async function handleSales(request, env) {
     await env.DB.prepare(
       `INSERT INTO sales (id, sale_number, date, register_id, customer_name, description, amount, payment_status, status, created_by, rejection_reason, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, body.sale_number, body.date, body.register_id, body.customer_name || null, body.description || null, body.amount, body.payment_status || 'unpaid', body.status || 'draft', user.id, null, now, now);
+      ).bind(id, body.sale_number, body.date, body.register_id, body.customer_name || null, body.description || null, body.amount, body.payment_status || 'unpaid', body.status || 'draft', user.id, null, now, now).run();
+
+    await setOptionalColumns(env, 'sales', id, { notes: body.notes });
 
     await createAuditLog(env, {
       user: user.username,
@@ -98,7 +100,9 @@ export async function handleSales(request, env) {
     await env.DB.prepare(
       `UPDATE sales SET sale_number = ?, date = ?, register_id = ?, customer_name = ?, description = ?, amount = ?, payment_status = ?, status = ?, rejection_reason = ?, updated_at = ?
        WHERE id = ?`
-    ).bind(body.sale_number || existing.sale_number, body.date || existing.date, body.register_id || existing.register_id, body.customer_name ?? existing.customer_name, body.description ?? existing.description, body.amount ?? existing.amount, body.payment_status || existing.payment_status, body.status || existing.status, body.rejection_reason ?? existing.rejection_reason, now, id);
+      ).bind(body.sale_number || existing.sale_number, body.date || existing.date, body.register_id || existing.register_id, body.customer_name ?? existing.customer_name, body.description ?? existing.description, body.amount ?? existing.amount, body.payment_status || existing.payment_status, body.status || existing.status, body.rejection_reason ?? existing.rejection_reason, now, id).run();
+
+    await setOptionalColumns(env, 'sales', id, { notes: body.notes });
 
     await createAuditLog(env, {
       user: user.username,

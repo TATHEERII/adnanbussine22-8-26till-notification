@@ -10,7 +10,6 @@ import Table from '../components/ui/Table'
 import FAB from '../components/ui/FAB'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
-import { useAuditLog } from '../hooks/useAuditLog'
 import './Purchase.css'
 
 const statusOptions = [
@@ -52,7 +51,7 @@ export default function Purchase() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const { purchases, setPurchases, registers } = useData()
+  const { purchases, createPurchase, updatePurchase, approveItem, rejectItem, registers } = useData()
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [registerFilter, setRegisterFilter] = useState('')
@@ -73,7 +72,6 @@ export default function Purchase() {
   })
 
   const current = useAuth()
-  const { addLog } = useAuditLog()
 
   const activeRegisters = useMemo(() => {
     return registers.filter((r) => r.status === 'active')
@@ -110,31 +108,28 @@ export default function Purchase() {
     })
   }
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault()
     if (!formData.supplierName.trim() || !formData.registerId || !formData.amount) return
 
-    const selectedReg = registers.find((r) => r.id === formData.registerId)
     const newPurchase = {
-      id: `p${Date.now()}`,
       purchaseNumber: generatePurchaseNumber(purchases),
       date: formData.date,
-      register: selectedReg ? selectedReg.name : '',
       registerId: formData.registerId,
       supplierName: formData.supplierName.trim(),
       description: formData.description.trim(),
       amount: Number(formData.amount) || 0,
-      status: 'draft',
-      createdBy: current.name,
-      createdById: current.id,
       notes: formData.notes.trim(),
-      rejectionReason: '',
+      status: 'draft',
     }
 
-    setPurchases((prev) => [newPurchase, ...prev])
-    addLog({ user: current.name, action: 'Purchase Created', module: 'Purchases', reference: newPurchase.purchaseNumber, register: selectedReg ? selectedReg.name : '', description: `Created purchase for ${newPurchase.supplierName}`, oldStatus: '-', newStatus: 'Draft' })
-    resetForm()
-    setShowCreateModal(false)
+    try {
+      await createPurchase(newPurchase)
+      resetForm()
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to create purchase')
+    }
   }
 
   const handleEditDraft = (purchase) => {
@@ -150,72 +145,59 @@ export default function Purchase() {
     setShowCreateModal(true)
   }
 
-  const handleUpdateDraft = (e) => {
+  const handleUpdateDraft = async (e) => {
     e.preventDefault()
     if (!selectedPurchase || !formData.supplierName.trim() || !formData.registerId || !formData.amount) return
 
-    const selectedReg = registers.find((r) => r.id === formData.registerId)
-    setPurchases((prev) =>
-      prev.map((p) =>
-        p.id === selectedPurchase.id
-          ? {
-              ...p,
-              date: formData.date,
-              register: selectedReg ? selectedReg.name : '',
-              registerId: formData.registerId,
-              supplierName: formData.supplierName.trim(),
-              description: formData.description.trim(),
-              amount: Number(formData.amount) || 0,
-              notes: formData.notes.trim(),
-            }
-          : p
-      )
-    )
-    resetForm()
-    setSelectedPurchase(null)
-    setShowCreateModal(false)
+    try {
+      await updatePurchase(selectedPurchase.id, {
+        purchaseNumber: selectedPurchase.purchaseNumber,
+        date: formData.date,
+        registerId: formData.registerId,
+        supplierName: formData.supplierName.trim(),
+        description: formData.description.trim(),
+        amount: Number(formData.amount) || 0,
+        notes: formData.notes.trim(),
+      })
+      resetForm()
+      setSelectedPurchase(null)
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to update purchase')
+    }
   }
 
-  const handleSubmit = (purchaseId) => {
-    const purchase = purchases.find((p) => p.id === purchaseId)
-    if (!purchase) return
-    setPurchases((prev) =>
-      prev.map((p) =>
-        p.id === purchaseId ? { ...p, status: 'pending' } : p
-      )
-    )
-    addLog({ user: current.name, action: 'Purchase Submitted', module: 'Purchases', reference: purchase.purchaseNumber, register: purchase.register, description: 'Submitted purchase for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
+  const handleSubmit = async (purchaseId) => {
+    try {
+      await updatePurchase(purchaseId, { status: 'pending' })
+    } catch (err) {
+      alert(err.message || 'Failed to submit purchase')
+    }
   }
 
-  const handleApprove = (purchaseId) => {
-    const purchase = purchases.find((p) => p.id === purchaseId)
-    if (!purchase) return
-    setPurchases((prev) =>
-      prev.map((p) =>
-        p.id === purchaseId ? { ...p, status: 'approved', rejectionReason: '' } : p
-      )
-    )
-    addLog({ user: current.name, action: 'Purchase Approved', module: 'Purchases', reference: purchase.purchaseNumber, register: purchase.register, description: 'Approved purchase order', oldStatus: 'Pending Approval', newStatus: 'Approved' })
-    setShowViewModal(false)
-    setSelectedPurchase(null)
+  const handleApprove = async (purchaseId) => {
+    try {
+      await approveItem('purchase', purchaseId)
+      setShowViewModal(false)
+      setSelectedPurchase(null)
+    } catch (err) {
+      alert(err.message || 'Failed to approve purchase')
+    }
   }
 
-  const handleReject = (e) => {
+  const handleReject = async (e) => {
     e.preventDefault()
     if (!selectedPurchase || !rejectionReason.trim()) return
 
-    setPurchases((prev) =>
-      prev.map((p) =>
-        p.id === selectedPurchase.id
-          ? { ...p, status: 'rejected', rejectionReason: rejectionReason.trim() }
-          : p
-      )
-    )
-    addLog({ user: current.name, action: 'Purchase Rejected', module: 'Purchases', reference: selectedPurchase.purchaseNumber, register: selectedPurchase.register, description: 'Rejected purchase order', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-    setRejectionReason('')
-    setShowRejectModal(false)
-    setShowViewModal(false)
-    setSelectedPurchase(null)
+    try {
+      await rejectItem('purchase', selectedPurchase.id, rejectionReason.trim())
+      setRejectionReason('')
+      setShowRejectModal(false)
+      setShowViewModal(false)
+      setSelectedPurchase(null)
+    } catch (err) {
+      alert(err.message || 'Failed to reject purchase')
+    }
   }
 
   const openView = (purchase) => {

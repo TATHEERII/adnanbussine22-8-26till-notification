@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vite build",
+    "build": "vite build && node scripts/postbuild.cjs",
     "preview": "vite preview",
     "worker:dev": "wrangler dev src/worker/index.js",
     "worker:deploy": "wrangler deploy",
@@ -13,6 +13,7 @@
     "db:create": "wrangler d1 create importbiz-db",
     "db:migrate": "wrangler d1 migrations apply importbiz-db",
     "db:seed": "wrangler d1 execute importbiz-db --file=src/worker/db/schema.sql",
+    "db:migrate:notes": "node migrate_add_notes.cjs",
     "kv:create": "wrangler kv namespace create SESSIONS_V2",
     "kv:create:cache": "wrangler kv namespace create CACHE_V2"
   },

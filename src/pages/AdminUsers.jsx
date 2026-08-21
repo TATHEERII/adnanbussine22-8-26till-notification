@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Navigate } from 'react-router-dom'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -7,9 +7,9 @@ import Select from '../components/ui/Select'
 import Modal from '../components/ui/Modal'
 import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
-import { mockUsers } from '../data/mockData'
 import { useAuth } from '../context/AuthContext'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { getUsers, createUser, updateUser, deleteUser } from '../services/users'
+import { useData } from '../context/DataContext'
 import './AdminUsers.css'
 
 const statusOptions = [
@@ -42,11 +42,13 @@ const formatDate = (dateStr) => {
 
 export default function AdminUsers() {
   const current = useAuth()
+  const { refreshData } = useData()
   if (current?.role !== 'admin') {
     return <Navigate to="/dashboard" replace />
   }
 
-  const [users, setUsers] = useLocalStorageState('importbiz_v2_users', mockUsers)
+  const [users, setUsers] = useState([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
@@ -55,6 +57,20 @@ export default function AdminUsers() {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [showResetModal, setShowResetModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
+
+  useEffect(() => {
+    const fetchUsers = async () => {
+      try {
+        const data = await getUsers()
+        setUsers(data || [])
+      } catch (err) {
+        console.error('Failed to fetch users', err)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchUsers()
+  }, [])
 
   const [createForm, setCreateForm] = useState({
     name: '',
@@ -97,22 +113,29 @@ export default function AdminUsers() {
     setShowPermissionsModal(true)
   }
 
-  const toggleStatus = (userId) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId ? { ...u, status: u.status === 'active' ? 'inactive' : 'active' } : u
-      )
-    )
+  const toggleStatus = async (userId) => {
+    const target = users.find((u) => u.id === userId)
+    if (!target) return
+    const newStatus = target.status === 'active' ? 'inactive' : 'active'
+    try {
+      const updated = await updateUser(userId, { ...target, status: newStatus })
+      setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)))
+    } catch (err) {
+      console.error('Failed to update user status', err)
+    }
   }
 
-  const updatePermissions = (userId, permissions) => {
-    setUsers((prev) =>
-      prev.map((u) =>
-        u.id === userId ? { ...u, permissions } : u
-      )
-    )
-    setShowPermissionsModal(false)
-    setSelectedUser(null)
+  const updatePermissions = async (userId, permissions) => {
+    const target = users.find((u) => u.id === userId)
+    if (!target) return
+    try {
+      const updated = await updateUser(userId, { ...target, permissions })
+      setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)))
+      setShowPermissionsModal(false)
+      setSelectedUser(null)
+    } catch (err) {
+      console.error('Failed to update permissions', err)
+    }
   }
 
   const resetCreateForm = () => {
@@ -136,28 +159,26 @@ export default function AdminUsers() {
     })
   }
 
-  const handleCreateUser = (e) => {
+  const handleCreateUser = async (e) => {
     e.preventDefault()
     if (!createForm.name.trim() || !createForm.username.trim() || !createForm.email.trim() || !createForm.password.trim()) return
 
-    const today = new Date().toISOString().split('T')[0]
-    const newUser = {
-      id: `u${Date.now()}`,
-      name: createForm.name.trim(),
-      username: createForm.username.trim(),
-      email: createForm.email.trim(),
-      password: createForm.password.trim(),
-      role: createForm.role,
-      status: createForm.status,
-      createdAt: today,
-      lastActivity: today,
-      registerCount: 0,
-      permissions: { ...createForm.permissions },
+    try {
+      const created = await createUser({
+        name: createForm.name.trim(),
+        username: createForm.username.trim(),
+        email: createForm.email.trim(),
+        password: createForm.password.trim(),
+        role: createForm.role,
+        status: createForm.status,
+        permissions: { ...createForm.permissions },
+      })
+      setUsers((prev) => [...prev, created])
+      resetCreateForm()
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to create user')
     }
-
-    setUsers((prev) => [...prev, newUser])
-    resetCreateForm()
-    setShowCreateModal(false)
   }
 
   const handleCreatePermissionChange = (key, checked) => {
@@ -170,26 +191,15 @@ export default function AdminUsers() {
     }))
   }
 
-  const handleResetAll = () => {
-    const keysToReset = [
-      'importbiz_v2_registers',
-      'importbiz_v2_purchases',
-      'importbiz_v2_sales',
-      'importbiz_v2_expenses',
-      'importbiz_v2_payments',
-      'importbiz_v2_audit_logs',
-      'importbiz_v2_approvals',
-      'importbiz_v2_settings',
-    ]
-
-    keysToReset.forEach((key) => {
-      try {
-        localStorage.removeItem(key)
-      } catch {
-        // ignore storage errors
-      }
-    })
-
+  const handleResetAll = async () => {
+    // Application data now lives on the Cloudflare backend (D1), not in
+    // browser localStorage. Re-sync every slice from the server so the local
+    // React state matches the source of truth.
+    try {
+      await refreshData()
+    } catch {
+      // refreshData surfaces its own errors; ignore here.
+    }
     setShowResetModal(false)
   }
 
@@ -340,13 +350,13 @@ export default function AdminUsers() {
         <div className="modal-form-actions">
           <Button variant="secondary" onClick={() => { setShowPermissionsModal(false); setSelectedUser(null); }}>Cancel</Button>
           <Button
-            onClick={() => {
+            onClick={async () => {
               const checkboxes = document.querySelectorAll('.permission-checkbox input[type="checkbox"]')
               const newPerms = {}
               checkboxes.forEach((cb, index) => {
                 newPerms[permissionOptions[index].key] = cb.checked
               })
-              updatePermissions(selectedUser.id, newPerms)
+              await updatePermissions(selectedUser.id, newPerms)
             }}
           >
             Save Permissions
@@ -386,7 +396,11 @@ export default function AdminUsers() {
           <h2 className="admin-content-title">Users</h2>
           <span className="admin-content-subtitle">{filtered.length} user{filtered.length !== 1 ? 's' : ''}</span>
         </div>
-        <Table columns={columns} data={filtered} emptyText="No users found." cardViewOnMobile />
+        {loading ? (
+          <p className="admin-loading">Loading users...</p>
+        ) : (
+          <Table columns={columns} data={filtered} emptyText="No users found." cardViewOnMobile />
+        )}
       </div>
 
       {renderDetailsModal()}
@@ -465,19 +479,18 @@ export default function AdminUsers() {
         </form>
       </Modal>
 
-      <Modal open={showResetModal} onClose={() => setShowResetModal(false)} title="Reset All Data">
+      <Modal open={showResetModal} onClose={() => setShowResetModal(false)} title="Re-sync Data">
         <div className="reset-warning">
           <p className="reset-warning-text">
-            <strong>Warning:</strong> This action will permanently reset all application data to zero.
+            <strong>Notice:</strong> Application data is stored on the Cloudflare backend. This action will Re-sync all local state from the server.
           </p>
           <ul className="reset-warning-list">
-            <li>All registers will be deleted</li>
-            <li>All purchases, sales, expenses, and payments will be deleted</li>
-            <li>All audit logs will be deleted</li>
-            <li>All settings will be reset to default</li>
+            <li>Re-fetch all registers, purchases, sales, expenses, payments and audit logs from the server</li>
+            <li>Discard any unsaved local changes</li>
+            <li>Settings are loaded fresh from the server</li>
           </ul>
           <p className="reset-warning-exception">
-            <strong>Note:</strong> User credentials will <em>not</em> be affected.
+            <strong>Note:</strong> User credentials are not affected.
           </p>
           <p className="reset-warning-confirm">
             Are you sure you want to continue?

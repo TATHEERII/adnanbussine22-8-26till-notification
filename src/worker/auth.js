@@ -30,8 +30,8 @@ export async function handleAuth(request, env) {
 
     const { username, password } = body;
 
-    const user = await env.DB.prepare('SELECT * FROM users WHERE username = ? AND status = ?')
-      .bind(username, 'active')
+    const user = await env.DB.prepare('SELECT * FROM users WHERE (username = ? OR email = ?) AND status = ?')
+      .bind(username, username, 'active')
       .first();
 
     if (!user) {

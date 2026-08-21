@@ -1,4 +1,4 @@
-﻿import { verifySession, generateId, nowISO, createAuditLog } from './lib.js';
+﻿import { verifySession, generateId, nowISO, createAuditLog, setOptionalColumns } from './lib.js';
 
 export async function handlePayments(request, env) {
   const url = new URL(request.url);
@@ -67,7 +67,9 @@ export async function handlePayments(request, env) {
     await env.DB.prepare(
       `INSERT INTO payments (id, payment_number, date, register_id, type, party_name, reference, amount, payment_method, description, status, created_by, rejection_reason, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, body.payment_number, body.date, body.register_id, body.type || 'received', body.party_name || null, body.reference || null, body.amount, body.payment_method || 'cash', body.description || null, body.status || 'draft', user.id, null, now, now);
+      ).bind(id, body.payment_number, body.date, body.register_id, body.type || 'received', body.party_name || null, body.reference || null, body.amount, body.payment_method || 'cash', body.description || null, body.status || 'draft', user.id, null, now, now).run();
+
+    await setOptionalColumns(env, 'payments', id, { notes: body.notes });
 
     await createAuditLog(env, {
       user: user.username,
@@ -100,7 +102,9 @@ export async function handlePayments(request, env) {
     await env.DB.prepare(
       `UPDATE payments SET payment_number = ?, date = ?, register_id = ?, type = ?, party_name = ?, reference = ?, amount = ?, payment_method = ?, description = ?, status = ?, rejection_reason = ?, updated_at = ?
        WHERE id = ?`
-    ).bind(body.payment_number || existing.payment_number, body.date || existing.date, body.register_id || existing.register_id, body.type || existing.type, body.party_name ?? existing.party_name, body.reference ?? existing.reference, body.amount ?? existing.amount, body.payment_method || existing.payment_method, body.description ?? existing.description, body.status || existing.status, body.rejection_reason ?? existing.rejection_reason, now, id);
+      ).bind(body.payment_number || existing.payment_number, body.date || existing.date, body.register_id || existing.register_id, body.type || existing.type, body.party_name ?? existing.party_name, body.reference ?? existing.reference, body.amount ?? existing.amount, body.payment_method || existing.payment_method, body.description ?? existing.description, body.status || existing.status, body.rejection_reason ?? existing.rejection_reason, now, id).run();
+
+    await setOptionalColumns(env, 'payments', id, { notes: body.notes });
 
     await createAuditLog(env, {
       user: user.username,

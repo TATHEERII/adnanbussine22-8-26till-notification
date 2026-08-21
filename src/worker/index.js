@@ -9,6 +9,7 @@ import { handleReports } from './reports.js';
 import { handleAuditLogs } from './auditLogs.js';
 import { handleSettings } from './settings.js';
 import { handleNotifications } from './notifications.js';
+import { handleUsers } from './users.js';
 
 export default {
   async fetch(request, env) {
@@ -54,6 +55,7 @@ export default {
         if (path.startsWith('/api/audit-logs')) return handleAuditLogs(request, env);
         if (path.startsWith('/api/settings')) return handleSettings(request, env);
         if (path.startsWith('/api/notifications')) return handleNotifications(request, env);
+        if (path.startsWith('/api/users')) return handleUsers(request, env);
 
         return new Response(JSON.stringify({ error: 'Not Found' }), {
           status: 404,
@@ -62,11 +64,20 @@ export default {
       }
 
       try {
-        const assetResponse = await env.ASSETS.fetch(new Request(`${url.origin}/index.html`))
-        return assetResponse
-      } catch {
-        return new Response('Not Found', { status: 404 })
-      }
+        if (env.ASSETS) {
+          const assetResponse = await env.ASSETS.fetch(request)
+          if (assetResponse.status !== 404) return assetResponse
+
+          const indexRequest = new Request(`${url.origin}/index.html`, request)
+          const indexResponse = await env.ASSETS.fetch(indexRequest)
+          if (indexResponse.status !== 404) return indexResponse
+        }
+      } catch {}
+
+      return new Response(JSON.stringify({ error: 'Not Found' }), {
+        status: 404,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
     } catch (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,

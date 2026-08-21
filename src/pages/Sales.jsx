@@ -10,7 +10,6 @@ import Table from '../components/ui/Table'
 import FAB from '../components/ui/FAB'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
-import { useAuditLog } from '../hooks/useAuditLog'
 import './Sales.css'
 
 const statusOptions = [
@@ -58,7 +57,7 @@ export default function Sales() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const { sales, setSales, registers } = useData()
+  const { sales, createSale, updateSale, approveItem, rejectItem, registers } = useData()
   const [search, setSearch] = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [registerFilter, setRegisterFilter] = useState('')
@@ -80,7 +79,6 @@ export default function Sales() {
   })
 
   const current = useAuth()
-  const { addLog } = useAuditLog()
 
   const activeRegisters = useMemo(() => {
     return registers.filter((r) => r.status === 'active')
@@ -118,32 +116,29 @@ export default function Sales() {
     })
   }
 
-  const handleCreate = (e) => {
+  const handleCreate = async (e) => {
     e.preventDefault()
     if (!formData.customerName.trim() || !formData.registerId || !formData.amount) return
 
-    const selectedReg = registers.find((r) => r.id === formData.registerId)
     const newSale = {
-      id: `s${Date.now()}`,
       saleNumber: generateSaleNumber(sales),
       date: formData.date,
-      register: selectedReg ? selectedReg.name : '',
       registerId: formData.registerId,
       customerName: formData.customerName.trim(),
       description: formData.description.trim(),
       amount: Number(formData.amount) || 0,
       paymentStatus: formData.paymentStatus,
-      status: 'draft',
-      createdBy: current.name,
-      createdById: current.id,
       notes: formData.notes.trim(),
-      rejectionReason: '',
+      status: 'draft',
     }
 
-    setSales((prev) => [newSale, ...prev])
-    addLog({ user: current.name, action: 'Sale Created', module: 'Sales', reference: newSale.saleNumber, register: selectedReg ? selectedReg.name : '', description: `Created sale for ${newSale.customerName}`, oldStatus: '-', newStatus: 'Draft' })
-    resetForm()
-    setShowCreateModal(false)
+    try {
+      await createSale(newSale)
+      resetForm()
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to create sale')
+    }
   }
 
   const handleEditDraft = (sale) => {
@@ -160,73 +155,60 @@ export default function Sales() {
     setShowCreateModal(true)
   }
 
-  const handleUpdateDraft = (e) => {
+  const handleUpdateDraft = async (e) => {
     e.preventDefault()
     if (!selectedSale || !formData.customerName.trim() || !formData.registerId || !formData.amount) return
 
-    const selectedReg = registers.find((r) => r.id === formData.registerId)
-    setSales((prev) =>
-      prev.map((s) =>
-        s.id === selectedSale.id
-          ? {
-              ...s,
-              date: formData.date,
-              register: selectedReg ? selectedReg.name : '',
-              registerId: formData.registerId,
-              customerName: formData.customerName.trim(),
-              description: formData.description.trim(),
-              amount: Number(formData.amount) || 0,
-              paymentStatus: formData.paymentStatus,
-              notes: formData.notes.trim(),
-            }
-          : s
-      )
-    )
-    resetForm()
-    setSelectedSale(null)
-    setShowCreateModal(false)
+    try {
+      await updateSale(selectedSale.id, {
+        saleNumber: selectedSale.saleNumber,
+        date: formData.date,
+        registerId: formData.registerId,
+        customerName: formData.customerName.trim(),
+        description: formData.description.trim(),
+        amount: Number(formData.amount) || 0,
+        paymentStatus: formData.paymentStatus,
+        notes: formData.notes.trim(),
+      })
+      resetForm()
+      setSelectedSale(null)
+      setShowCreateModal(false)
+    } catch (err) {
+      alert(err.message || 'Failed to update sale')
+    }
   }
 
-  const handleSubmit = (saleId) => {
-    const sale = sales.find((s) => s.id === saleId)
-    if (!sale) return
-    setSales((prev) =>
-      prev.map((s) =>
-        s.id === saleId ? { ...s, status: 'pending' } : s
-      )
-    )
-    addLog({ user: current.name, action: 'Sale Submitted', module: 'Sales', reference: sale.saleNumber, register: sale.register, description: 'Submitted sale for approval', oldStatus: 'Draft', newStatus: 'Pending Approval' })
+  const handleSubmit = async (saleId) => {
+    try {
+      await updateSale(saleId, { status: 'pending' })
+    } catch (err) {
+      alert(err.message || 'Failed to submit sale')
+    }
   }
 
-  const handleApprove = (saleId) => {
-    const sale = sales.find((s) => s.id === saleId)
-    if (!sale) return
-    setSales((prev) =>
-      prev.map((s) =>
-        s.id === saleId ? { ...s, status: 'approved', rejectionReason: '' } : s
-      )
-    )
-    addLog({ user: current.name, action: 'Sale Approved', module: 'Sales', reference: sale.saleNumber, register: sale.register, description: 'Approved sale record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
-    setShowViewModal(false)
-    setSelectedSale(null)
+  const handleApprove = async (saleId) => {
+    try {
+      await approveItem('sale', saleId)
+      setShowViewModal(false)
+      setSelectedSale(null)
+    } catch (err) {
+      alert(err.message || 'Failed to approve sale')
+    }
   }
 
-  const handleReject = (e) => {
+  const handleReject = async (e) => {
     e.preventDefault()
     if (!selectedSale || !rejectionReason.trim()) return
 
-    setSales((prev) =>
-      prev.map((s) =>
-        s.id === selectedSale.id
-          ? { ...s, status: 'rejected', rejectionReason: rejectionReason.trim() }
-          : s
-      )
-    )
-    addLog({ user: current.name, action: 'Sale Rejected', module: 'Sales', reference: selectedSale.saleNumber, register: selectedSale.register, description: 'Rejected sale record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-    setRejectionReason('')
-    setShowRejectModal(false)
-    setShowViewModal(false)
-    setSelectedSale(null)
+    try {
+      await rejectItem('sale', selectedSale.id, rejectionReason.trim())
+      setRejectionReason('')
+      setShowRejectModal(false)
+      setShowViewModal(false)
+      setSelectedSale(null)
+    } catch (err) {
+      alert(err.message || 'Failed to reject sale')
+    }
   }
 
   const openView = (sale) => {

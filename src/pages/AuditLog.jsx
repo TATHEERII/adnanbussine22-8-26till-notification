@@ -4,8 +4,7 @@ import Button from '../components/ui/Button'
 import Input from '../components/ui/Input'
 import Select from '../components/ui/Select'
 import Table from '../components/ui/Table'
-import { mockAuditLogs } from '../data/mockData'
-import { useLocalStorageState } from '../hooks/useLocalStorageState'
+import { useAuditLog } from '../hooks/useAuditLog'
 import './AuditLog.css'
 
 const moduleOptions = [
@@ -51,7 +50,9 @@ const formatDate = (dateStr) => {
 }
 
 export default function AuditLog() {
-  const [auditLogs, setAuditLogs] = useLocalStorageState('importbiz_v2_audit_logs', mockAuditLogs)
+  // Audit entries are read from the Cloudflare Worker (`/api/audit-logs`)
+  // instead of browser localStorage.
+  const { logs: auditLogs } = useAuditLog()
   const [search, setSearch] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')

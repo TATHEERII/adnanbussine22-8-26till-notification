@@ -65,7 +65,7 @@ export async function handleRegisters(request, env) {
     await env.DB.prepare(
       `INSERT INTO registers (id, name, type, opening_balance, description, status, owner_id, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, body.name, body.type || 'General', body.opening_balance || 0, body.description || null, body.status || 'draft', user.id, now, now);
+    ).bind(id, body.name, body.type || 'General', body.opening_balance || 0, body.description || null, body.status || 'draft', user.id, now, now).run();
 
     await createAuditLog(env, {
       user: user.username,
@@ -98,7 +98,7 @@ export async function handleRegisters(request, env) {
     await env.DB.prepare(
       `UPDATE registers SET name = ?, type = ?, opening_balance = ?, description = ?, status = ?, updated_at = ?
        WHERE id = ?`
-    ).bind(body.name || existing.name, body.type || existing.type, body.opening_balance ?? existing.opening_balance, body.description ?? existing.description, body.status || existing.status, now, id);
+    ).bind(body.name || existing.name, body.type || existing.type, body.opening_balance ?? existing.opening_balance, body.description ?? existing.description, body.status || existing.status, now, id).run();
 
     await createAuditLog(env, {
       user: user.username,

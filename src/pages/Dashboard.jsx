@@ -67,7 +67,7 @@ export default function Dashboard() {
   const [customStart, setCustomStart] = useState(todayStr)
   const [customEnd, setCustomEnd] = useState(todayStr)
 
-  const { registers, setRegisters, purchases, setPurchases, sales, setSales, expenses, setExpenses, payments, setPayments, approvals, setApprovals } = useData()
+  const { registers, purchases, sales, expenses, payments, approvals } = useData()
 
   const safeArray = (val) => (Array.isArray(val) ? val : [])
 

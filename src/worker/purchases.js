@@ -1,4 +1,4 @@
-﻿import { verifySession, generateId, nowISO, createAuditLog } from './lib.js';
+﻿import { verifySession, generateId, nowISO, createAuditLog, setOptionalColumns } from './lib.js';
 
 export async function handlePurchases(request, env) {
   const url = new URL(request.url);
@@ -65,7 +65,9 @@ export async function handlePurchases(request, env) {
     await env.DB.prepare(
       `INSERT INTO purchases (id, purchase_number, date, register_id, supplier_name, description, amount, status, created_by, rejection_reason, created_at, updated_at)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-    ).bind(id, body.purchase_number, body.date, body.register_id, body.supplier_name || null, body.description || null, body.amount, body.status || 'draft', user.id, null, now, now);
+      ).bind(id, body.purchase_number, body.date, body.register_id, body.supplier_name || null, body.description || null, body.amount, body.status || 'draft', user.id, null, now, now).run();
+
+    await setOptionalColumns(env, 'purchases', id, { notes: body.notes });
 
     await createAuditLog(env, {
       user: user.username,
@@ -98,7 +100,9 @@ export async function handlePurchases(request, env) {
     await env.DB.prepare(
       `UPDATE purchases SET purchase_number = ?, date = ?, register_id = ?, supplier_name = ?, description = ?, amount = ?, status = ?, rejection_reason = ?, updated_at = ?
        WHERE id = ?`
-    ).bind(body.purchase_number || existing.purchase_number, body.date || existing.date, body.register_id || existing.register_id, body.supplier_name ?? existing.supplier_name, body.description ?? existing.description, body.amount ?? existing.amount, body.status || existing.status, body.rejection_reason ?? existing.rejection_reason, now, id);
+      ).bind(body.purchase_number || existing.purchase_number, body.date || existing.date, body.register_id || existing.register_id, body.supplier_name ?? existing.supplier_name, body.description ?? existing.description, body.amount ?? existing.amount, body.status || existing.status, body.rejection_reason ?? existing.rejection_reason, now, id).run();
+
+    await setOptionalColumns(env, 'purchases', id, { notes: body.notes });
 
     await createAuditLog(env, {
       user: user.username,

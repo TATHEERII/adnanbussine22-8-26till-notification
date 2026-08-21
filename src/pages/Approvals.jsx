@@ -7,7 +7,6 @@ import Modal from '../components/ui/Modal'
 import Table from '../components/ui/Table'
 import { useAuth } from '../context/AuthContext'
 import { useData } from '../context/DataContext'
-import { useAuditLog } from '../hooks/useAuditLog'
 import './Approvals.css'
 
 const statusVariant = (status) => {
@@ -37,10 +36,9 @@ export default function Approvals() {
     return `${currencySymbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  const { registers, setRegisters, purchases, setPurchases, sales, setSales, expenses, setExpenses, payments, setPayments } = useData()
+  const { registers, purchases, sales, expenses, payments, approveItem, rejectItem } = useData()
 
   const current = useAuth()
-  const { addLog } = useAuditLog()
 
   const [activeTab, setActiveTab] = useState('')
   const [showViewModal, setShowViewModal] = useState(false)
@@ -79,95 +77,31 @@ export default function Approvals() {
     setShowRejectModal(true)
   }
 
-  const handleApprove = (item) => {
+  const handleApprove = async (item) => {
     if (!item) return
 
-    const { type, id } = item
-
-    switch (type) {
-      case 'register':
-        setRegisters((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, status: 'active', rejectionReason: '' } : r))
-        )
-        addLog({ user: current.name, action: 'Register Approved', module: 'Registers', reference: `REG-${item.id.replace('r', '').padStart(5, '0')}`, register: '-', description: 'Approved register request', oldStatus: 'Pending Approval', newStatus: 'Active' })
-        break
-      case 'purchase':
-        setPurchases((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, status: 'approved', rejectionReason: '' } : p))
-        )
-        addLog({ user: current.name, action: 'Purchase Approved', module: 'Purchases', reference: item.purchaseNumber, register: item.register, description: 'Approved purchase order', oldStatus: 'Pending Approval', newStatus: 'Approved' })
-        break
-      case 'sale':
-        setSales((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, status: 'approved', rejectionReason: '' } : s))
-        )
-        addLog({ user: current.name, action: 'Sale Approved', module: 'Sales', reference: item.saleNumber, register: item.register, description: 'Approved sale record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
-        break
-      case 'expense':
-        setExpenses((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, status: 'approved', rejectionReason: '' } : e))
-        )
-        addLog({ user: current.name, action: 'Expense Approved', module: 'Expenses', reference: item.expenseNumber, register: item.register, description: 'Approved expense record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
-        break
-      case 'payment':
-        setPayments((prev) =>
-          prev.map((pm) => (pm.id === id ? { ...pm, status: 'approved', rejectionReason: '' } : pm))
-        )
-        addLog({ user: current.name, action: 'Payment Approved', module: 'Payments', reference: item.paymentNumber, register: item.register, description: 'Approved payment record', oldStatus: 'Pending Approval', newStatus: 'Approved' })
-        break
-      default:
-        break
+    try {
+      await approveItem(item.type, item.id)
+      setShowViewModal(false)
+      setSelectedItem(null)
+    } catch (err) {
+      alert(err.message || 'Failed to approve request')
     }
-
-    setShowViewModal(false)
-    setSelectedItem(null)
   }
 
-  const handleReject = (e, item) => {
+  const handleReject = async (e, item) => {
     e.preventDefault()
     if (!item || !rejectionReason.trim()) return
 
-    const { type, id } = item
-
-    switch (type) {
-      case 'register':
-        setRegisters((prev) =>
-          prev.map((r) => (r.id === id ? { ...r, status: 'rejected', rejectionReason: rejectionReason.trim() } : r))
-        )
-        addLog({ user: current.name, action: 'Register Rejected', module: 'Registers', reference: `REG-${item.id.replace('r', '').padStart(5, '0')}`, register: '-', description: 'Rejected register request', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-        break
-      case 'purchase':
-        setPurchases((prev) =>
-          prev.map((p) => (p.id === id ? { ...p, status: 'rejected', rejectionReason: rejectionReason.trim() } : p))
-        )
-        addLog({ user: current.name, action: 'Purchase Rejected', module: 'Purchases', reference: item.purchaseNumber, register: item.register, description: 'Rejected purchase order', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-        break
-      case 'sale':
-        setSales((prev) =>
-          prev.map((s) => (s.id === id ? { ...s, status: 'rejected', rejectionReason: rejectionReason.trim() } : s))
-        )
-        addLog({ user: current.name, action: 'Sale Rejected', module: 'Sales', reference: item.saleNumber, register: item.register, description: 'Rejected sale record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-        break
-      case 'expense':
-        setExpenses((prev) =>
-          prev.map((e) => (e.id === id ? { ...e, status: 'rejected', rejectionReason: rejectionReason.trim() } : e))
-        )
-        addLog({ user: current.name, action: 'Expense Rejected', module: 'Expenses', reference: item.expenseNumber, register: item.register, description: 'Rejected expense record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-        break
-      case 'payment':
-        setPayments((prev) =>
-          prev.map((pm) => (pm.id === id ? { ...pm, status: 'rejected', rejectionReason: rejectionReason.trim() } : pm))
-        )
-        addLog({ user: current.name, action: 'Payment Rejected', module: 'Payments', reference: item.paymentNumber, register: item.register, description: 'Rejected payment record', oldStatus: 'Pending Approval', newStatus: 'Rejected' })
-        break
-      default:
-        break
+    try {
+      await rejectItem(item.type, item.id, rejectionReason.trim())
+      setRejectionReason('')
+      setShowRejectModal(false)
+      setShowViewModal(false)
+      setSelectedItem(null)
+    } catch (err) {
+      alert(err.message || 'Failed to reject request')
     }
-
-    setRejectionReason('')
-    setShowRejectModal(false)
-    setShowViewModal(false)
-    setSelectedItem(null)
   }
 
   const getReferenceNumber = (item) => {

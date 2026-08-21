@@ -1,0 +1,5 @@
+ALTER TABLE purchases ADD COLUMN notes TEXT;
+ALTER TABLE sales ADD COLUMN notes TEXT;
+ALTER TABLE expenses ADD COLUMN notes TEXT;
+ALTER TABLE expenses ADD COLUMN paid_through TEXT;
+ALTER TABLE payments ADD COLUMN notes TEXT;

@@ -3,8 +3,6 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
 import BottomNav from './BottomNav'
-import { AuthProvider } from '../../context/AuthContext'
-import { SettingsProvider } from '../../context/SettingsContext'
 import './Layout.css'
 
 const bottomNavItems = [
@@ -70,11 +68,7 @@ export default function Layout({ user, onLogout }) {
           sidebarCollapsed={!isMobile && sidebarCollapsed}
         />
         <main className="layout-content">
-          <AuthProvider user={user}>
-            <SettingsProvider>
-              <Outlet />
-            </SettingsProvider>
-          </AuthProvider>
+          <Outlet />
         </main>
       </div>
       {isMobile && (

@@ -122,7 +122,7 @@ export async function handleApprovals(request, env) {
 
     await env.DB.prepare(
       `UPDATE ${config.table} SET status = ?, rejection_reason = '', updated_at = ? WHERE ${config.idCol} = ?`
-    ).bind(newStatus, now, id);
+    ).bind(newStatus, now, id).run();
 
     await createAuditLog(env, {
       user: user.username,
@@ -192,7 +192,7 @@ export async function handleApprovals(request, env) {
 
     await env.DB.prepare(
       `UPDATE ${config.table} SET status = 'rejected', rejection_reason = ?, updated_at = ? WHERE ${config.idCol} = ?`
-    ).bind(reason, now, id);
+    ).bind(reason, now, id).run();
 
     await createAuditLog(env, {
       user: user.username,

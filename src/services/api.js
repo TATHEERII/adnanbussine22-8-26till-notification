@@ -1,4 +1,4 @@
-﻿const API_URL = import.meta.env.VITE_API_URL || '/api'
+﻿const API_URL = import.meta.env.VITE_API_URL || ''
 
 function getToken() {
   return sessionStorage.getItem('importbiz_token')
@@ -27,7 +27,9 @@ async function request(path, options = {}) {
 
   if (response.status === 401) {
     setToken(null)
-    window.location.href = '/login'
+    if (window.location.pathname !== '/login') {
+      window.location.href = '/login'
+    }
     throw new Error('Unauthorized')
   }
 

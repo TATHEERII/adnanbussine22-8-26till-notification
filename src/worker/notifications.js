@@ -57,7 +57,7 @@ export async function handleNotifications(request, env) {
 
     await env.DB.prepare(
       `UPDATE notifications SET read = 1, updated_at = ? WHERE id IN (${placeholders}) AND user_id = ?`
-    ).bind(now, ...ids, user.id);
+     ).bind(now, ...ids, user.id).run();
 
     await createAuditLog(env, {
       user: user.username,
