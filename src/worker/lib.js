@@ -53,7 +53,7 @@ export async function createAuditLog(env, data) {
     data.description || null,
     data.oldStatus || null,
     data.newStatus || null
-  );
+  ).run();
 }
 
 export async function createNotification(env, data) {
@@ -68,7 +68,7 @@ export async function createNotification(env, data) {
     data.reference || null,
     data.message,
     data.read || 0
-  );
+  ).run();
 }
 
 export async function getSettings(env) {

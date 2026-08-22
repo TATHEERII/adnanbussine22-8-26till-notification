@@ -4,6 +4,10 @@ export async function getUsers() {
   return api.get('/api/users')
 }
 
+export async function getUserLookup() {
+  return api.get('/api/users/lookup')
+}
+
 export async function createUser(data) {
   return api.post('/api/users', data)
 }

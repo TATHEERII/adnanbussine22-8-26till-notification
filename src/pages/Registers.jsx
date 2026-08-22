@@ -128,6 +128,12 @@ export default function Registers() {
         openingBalance: Number(formData.openingBalance) || 0,
         description: formData.description.trim(),
       })
+
+      // If this was a rejected register, resubmit it for approval after updating.
+      if (selectedRegister.status === 'rejected') {
+        await updateRegister(selectedRegister.id, { status: 'pending' })
+      }
+
       resetForm()
       setSelectedRegister(null)
       setShowCreateModal(false)

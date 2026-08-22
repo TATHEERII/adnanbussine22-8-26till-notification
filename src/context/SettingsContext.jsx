@@ -75,6 +75,7 @@ export function SettingsProvider({ children }) {
         setSettings: saveSettingsChange,
         currencySymbol,
         settingsLoaded,
+        refreshSettings: loadSettings,
       }}
     >
       {children}

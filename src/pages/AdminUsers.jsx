@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { Navigate } from 'react-router-dom'
 import Badge from '../components/ui/Badge'
 import Button from '../components/ui/Button'
@@ -9,7 +9,9 @@ import FormLayout, { FormSection } from '../components/ui/FormLayout'
 import Table from '../components/ui/Table'
 import { useAuth } from '../context/AuthContext'
 import { getUsers, createUser, updateUser, deleteUser } from '../services/users'
+import { resetAllData } from '../services/admin'
 import { useData } from '../context/DataContext'
+import { useSettings } from '../context/SettingsContext'
 import './AdminUsers.css'
 
 const statusOptions = [
@@ -43,6 +45,7 @@ const formatDate = (dateStr) => {
 export default function AdminUsers() {
   const current = useAuth()
   const { refreshData } = useData()
+  const { refreshSettings } = useSettings()
   if (current?.role !== 'admin') {
     return <Navigate to="/dashboard" replace />
   }
@@ -58,18 +61,91 @@ export default function AdminUsers() {
   const [showResetModal, setShowResetModal] = useState(false)
   const [selectedUser, setSelectedUser] = useState(null)
 
+  const pollTimerRef = useRef(null)
+  const notifTimerRef = useRef(null)
+  const isRefreshingRef = useRef(false)
+  const broadcastRef = useRef(null)
+
+  const fetchUsers = async () => {
+    if (isRefreshingRef.current) return
+    isRefreshingRef.current = true
+    try {
+      const data = await getUsers()
+      setUsers(data || [])
+    } catch (err) {
+      console.error('Failed to fetch users', err)
+    } finally {
+      setLoading(false)
+      isRefreshingRef.current = false
+    }
+  }
+
+  const broadcastRefresh = () => {
+    try {
+      if (!broadcastRef.current) {
+        broadcastRef.current = new BroadcastChannel('importbiz-sync')
+      }
+      broadcastRef.current.postMessage({ type: 'refresh' })
+    } catch {
+      // BroadcastChannel not supported
+    }
+  }
+
   useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const data = await getUsers()
-        setUsers(data || [])
-      } catch (err) {
-        console.error('Failed to fetch users', err)
-      } finally {
-        setLoading(false)
+    fetchUsers()
+  }, [])
+
+  // BroadcastChannel: instant same-browser multi-tab sync.
+  useEffect(() => {
+    let channel
+    try {
+      channel = new BroadcastChannel('importbiz-sync')
+      channel.onmessage = () => {
+        fetchUsers()
+      }
+      broadcastRef.current = channel
+    } catch {
+      // BroadcastChannel not supported; polling only.
+    }
+    return () => {
+      if (channel) channel.close()
+    }
+  }, [])
+
+  // Poll users every 3 seconds when tab is visible for near-real-time
+  // cross-device sync.
+  useEffect(() => {
+    const startPolling = () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+      pollTimerRef.current = setInterval(() => {
+        fetchUsers()
+      }, 3000)
+    }
+
+    const stopPolling = () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current)
+        pollTimerRef.current = null
       }
     }
-    fetchUsers()
+
+    if (document.visibilityState === 'visible') {
+      startPolling()
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUsers()
+        startPolling()
+      } else {
+        stopPolling()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      stopPolling()
+    }
   }, [])
 
   const [createForm, setCreateForm] = useState({
@@ -118,8 +194,9 @@ export default function AdminUsers() {
     if (!target) return
     const newStatus = target.status === 'active' ? 'inactive' : 'active'
     try {
-      const updated = await updateUser(userId, { ...target, status: newStatus })
-      setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)))
+      await updateUser(userId, { ...target, status: newStatus })
+      await fetchUsers()
+      broadcastRefresh()
     } catch (err) {
       console.error('Failed to update user status', err)
     }
@@ -129,8 +206,9 @@ export default function AdminUsers() {
     const target = users.find((u) => u.id === userId)
     if (!target) return
     try {
-      const updated = await updateUser(userId, { ...target, permissions })
-      setUsers((prev) => prev.map((u) => (u.id === userId ? updated : u)))
+      await updateUser(userId, { ...target, permissions })
+      await fetchUsers()
+      broadcastRefresh()
       setShowPermissionsModal(false)
       setSelectedUser(null)
     } catch (err) {
@@ -164,7 +242,7 @@ export default function AdminUsers() {
     if (!createForm.name.trim() || !createForm.username.trim() || !createForm.email.trim() || !createForm.password.trim()) return
 
     try {
-      const created = await createUser({
+      await createUser({
         name: createForm.name.trim(),
         username: createForm.username.trim(),
         email: createForm.email.trim(),
@@ -173,7 +251,8 @@ export default function AdminUsers() {
         status: createForm.status,
         permissions: { ...createForm.permissions },
       })
-      setUsers((prev) => [...prev, created])
+      await fetchUsers()
+      broadcastRefresh()
       resetCreateForm()
       setShowCreateModal(false)
     } catch (err) {
@@ -192,13 +271,14 @@ export default function AdminUsers() {
   }
 
   const handleResetAll = async () => {
-    // Application data now lives on the Cloudflare backend (D1), not in
-    // browser localStorage. Re-sync every slice from the server so the local
-    // React state matches the source of truth.
     try {
+      await resetAllData()
       await refreshData()
-    } catch {
-      // refreshData surfaces its own errors; ignore here.
+      await refreshSettings()
+      await fetchUsers()
+      broadcastRefresh()
+    } catch (err) {
+      alert(err.message || 'Failed to reset data')
     }
     setShowResetModal(false)
   }
@@ -479,26 +559,26 @@ export default function AdminUsers() {
         </form>
       </Modal>
 
-      <Modal open={showResetModal} onClose={() => setShowResetModal(false)} title="Re-sync Data">
+      <Modal open={showResetModal} onClose={() => setShowResetModal(false)} title="Reset All Data">
         <div className="reset-warning">
           <p className="reset-warning-text">
-            <strong>Notice:</strong> Application data is stored on the Cloudflare backend. This action will Re-sync all local state from the server.
+            <strong>Warning:</strong> This will permanently delete all application data from the server.
           </p>
           <ul className="reset-warning-list">
-            <li>Re-fetch all registers, purchases, sales, expenses, payments and audit logs from the server</li>
-            <li>Discard any unsaved local changes</li>
-            <li>Settings are loaded fresh from the server</li>
+            <li>All registers, purchases, sales, expenses, and payments will be deleted</li>
+            <li>All audit logs, notifications, and sync data will be deleted</li>
+            <li>Settings will be reset to default values</li>
           </ul>
           <p className="reset-warning-exception">
-            <strong>Note:</strong> User credentials are not affected.
+            <strong>Note:</strong> User credentials (users, roles, permissions) are NOT affected.
           </p>
           <p className="reset-warning-confirm">
-            Are you sure you want to continue?
+            This action cannot be undone. Are you sure you want to continue?
           </p>
         </div>
         <div className="modal-form-actions">
           <Button variant="secondary" onClick={() => setShowResetModal(false)}>Cancel</Button>
-          <Button variant="danger" onClick={handleResetAll}>Yes, Reset Everything</Button>
+          <Button variant="danger" onClick={handleResetAll}>Yes, Delete All Data</Button>
         </div>
       </Modal>
     </div>

@@ -160,11 +160,11 @@ export default function Payments() {
       date: payment.date,
       registerId: payment.registerId,
       type: payment.type,
-      partyName: payment.partyName,
-      reference: payment.reference,
+      partyName: payment.partyName || '',
+      reference: payment.reference || '',
       amount: String(payment.amount || 0),
       paymentMethod: payment.paymentMethod,
-      description: payment.description,
+      description: payment.description || '',
       notes: payment.notes || '',
     })
     setShowCreateModal(true)
@@ -187,6 +187,12 @@ export default function Payments() {
         description: formData.description.trim(),
         notes: formData.notes.trim(),
       })
+
+      // If this was a rejected payment, resubmit it for approval after updating.
+      if (selectedPayment.status === 'rejected') {
+        await updatePayment(selectedPayment.id, { status: 'pending' })
+      }
+
       resetForm()
       setSelectedPayment(null)
       setShowCreateModal(false)

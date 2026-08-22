@@ -53,11 +53,10 @@ export async function handleNotifications(request, env) {
     }
 
     const placeholders = ids.map(() => '?').join(',');
-    const now = nowISO();
 
     await env.DB.prepare(
-      `UPDATE notifications SET read = 1, updated_at = ? WHERE id IN (${placeholders}) AND user_id = ?`
-     ).bind(now, ...ids, user.id).run();
+      `UPDATE notifications SET read = 1 WHERE id IN (${placeholders}) AND user_id = ?`
+     ).bind(...ids, user.id).run();
 
     await createAuditLog(env, {
       user: user.username,

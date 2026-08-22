@@ -19,12 +19,13 @@ const moduleOptions = [
 
 const actionOptions = [
   { value: '', label: 'All Actions' },
-  { value: 'Created', label: 'Created' },
-  { value: 'Submitted', label: 'Submitted' },
-  { value: 'Approved', label: 'Approved' },
-  { value: 'Rejected', label: 'Rejected' },
-  { value: 'Login', label: 'Login' },
-  { value: 'Logout', label: 'Logout' },
+  { value: 'create', label: 'Created' },
+  { value: 'update', label: 'Updated' },
+  { value: 'submit', label: 'Submitted' },
+  { value: 'approve', label: 'Approved' },
+  { value: 'reject', label: 'Rejected' },
+  { value: 'login', label: 'Login' },
+  { value: 'logout', label: 'Logout' },
 ]
 
 const statusVariant = (status) => {

@@ -10,6 +10,7 @@ import { handleAuditLogs } from './auditLogs.js';
 import { handleSettings } from './settings.js';
 import { handleNotifications } from './notifications.js';
 import { handleUsers } from './users.js';
+import { handleAdmin } from './admin.js';
 
 export default {
   async fetch(request, env) {
@@ -56,6 +57,7 @@ export default {
         if (path.startsWith('/api/settings')) return handleSettings(request, env);
         if (path.startsWith('/api/notifications')) return handleNotifications(request, env);
         if (path.startsWith('/api/users')) return handleUsers(request, env);
+        if (path.startsWith('/api/admin')) return handleAdmin(request, env);
 
         return new Response(JSON.stringify({ error: 'Not Found' }), {
           status: 404,

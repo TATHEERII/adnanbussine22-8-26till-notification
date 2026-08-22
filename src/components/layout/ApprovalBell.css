@@ -42,6 +42,10 @@
   line-height: 1;
 }
 
+.approval-bell-badge-notif {
+  background-color: var(--color-primary);
+}
+
 .approval-bell-dropdown {
   position: absolute;
   top: calc(100% + 0.5rem);
@@ -85,6 +89,86 @@
   font-weight: 600;
   color: var(--color-gray-900);
   margin: 0;
+}
+
+.approval-bell-clear-all {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: var(--color-primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem 0.5rem;
+  border-radius: var(--radius-sm);
+  line-height: 1;
+}
+
+.approval-bell-clear-all:hover {
+  background-color: var(--color-primary-light);
+  color: #1d4ed8;
+}
+
+.approval-bell-notifications {
+  padding: 0.5rem 0.75rem;
+  border-bottom: 1px solid var(--color-gray-100);
+  background-color: #f0f9ff;
+}
+
+.approval-bell-notification-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.5rem 0.5rem;
+  border-radius: var(--radius);
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.8125rem;
+  color: var(--color-gray-700);
+  transition: background-color 0.15s;
+  position: relative;
+}
+
+.approval-bell-notification-item:hover {
+  background-color: #e0f2fe;
+}
+
+.approval-bell-notification-item:not(:last-child) {
+  margin-bottom: 0.25rem;
+}
+
+.approval-bell-notification-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.approval-bell-notification-text {
+  flex: 1;
+  line-height: 1.4;
+}
+
+.approval-bell-notification-dismiss {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  line-height: 1;
+  color: var(--color-gray-400);
+  background: none;
+  border: none;
+  cursor: pointer;
+  flex-shrink: 0;
+  padding: 0;
+}
+
+.approval-bell-notification-dismiss:hover {
+  background-color: var(--color-gray-200);
+  color: var(--color-gray-600);
 }
 
 .approval-bell-list {

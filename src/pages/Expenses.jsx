@@ -157,10 +157,10 @@ export default function Expenses() {
     setFormData({
       date: expense.date,
       registerId: expense.registerId,
-      category: expense.category,
-      description: expense.description,
+      category: expense.category || '',
+      description: expense.description || '',
       amount: String(expense.amount || 0),
-      paidThrough: expense.paidThrough,
+      paidThrough: expense.paidThrough || 'Cash',
       notes: expense.notes || '',
     })
     setShowCreateModal(true)
@@ -181,6 +181,12 @@ export default function Expenses() {
         paidThrough: formData.paidThrough,
         notes: formData.notes.trim(),
       })
+
+      // If this was a rejected expense, resubmit it for approval after updating.
+      if (selectedExpense.status === 'rejected') {
+        await updateExpense(selectedExpense.id, { status: 'pending' })
+      }
+
       resetForm()
       setSelectedExpense(null)
       setShowCreateModal(false)

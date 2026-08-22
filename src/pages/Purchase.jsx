@@ -137,8 +137,8 @@ export default function Purchase() {
     setFormData({
       date: purchase.date,
       registerId: purchase.registerId,
-      supplierName: purchase.supplierName,
-      description: purchase.description,
+      supplierName: purchase.supplierName || '',
+      description: purchase.description || '',
       amount: String(purchase.amount || 0),
       notes: purchase.notes || '',
     })
@@ -159,6 +159,12 @@ export default function Purchase() {
         amount: Number(formData.amount) || 0,
         notes: formData.notes.trim(),
       })
+
+      // If this was a rejected purchase, resubmit it for approval after updating.
+      if (selectedPurchase.status === 'rejected') {
+        await updatePurchase(selectedPurchase.id, { status: 'pending' })
+      }
+
       resetForm()
       setSelectedPurchase(null)
       setShowCreateModal(false)

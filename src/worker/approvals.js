@@ -136,7 +136,7 @@ export async function handleApprovals(request, env) {
 
     await createNotification(env, {
       userId: item[config.ownerCol],
-      type: 'approval',
+      type: `approval_${entity}`,
       reference: id,
       message: `Your ${entity} has been approved`,
       read: 0,

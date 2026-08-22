@@ -28,7 +28,7 @@ import {
   updatePayment as svcUpdatePayment,
 } from '../services/payments'
 import { approve, reject, getApprovals } from '../services/approvals'
-import { getUsers } from '../services/users'
+import { getUsers, getUserLookup } from '../services/users'
 
 import {
   dbToRegister,
@@ -62,14 +62,31 @@ export function DataProvider({ children }) {
   const [approvals, setApprovals] = useState([])
   const [loaded, setLoaded] = useState(false)
   const [error, setError] = useState(null)
+  const [lastSynced, setLastSynced] = useState(null)
 
   // Cached lookup maps used to enrich records read back from the API
   // (register name by id, user display name by id).
   const registerMapRef = useRef({})
   const userMapRef = useRef({})
+  const isRefreshingRef = useRef(false)
+  const pollTimerRef = useRef(null)
+  const broadcastRef = useRef(null)
+
+  const broadcastRefresh = () => {
+    try {
+      if (!broadcastRef.current) {
+        broadcastRef.current = new BroadcastChannel('importbiz-sync')
+      }
+      broadcastRef.current.postMessage({ type: 'refresh' })
+    } catch {
+      // BroadcastChannel not supported
+    }
+  }
 
   const refreshData = useCallback(async () => {
     if (!getToken()) return
+    if (isRefreshingRef.current) return
+    isRefreshingRef.current = true
     setLoaded(false)
     setError(null)
     try {
@@ -90,18 +107,16 @@ export function DataProvider({ children }) {
       })
       registerMapRef.current = registerMap
 
-      // Users are only listable by admins; otherwise fall back to the
-      // current session so the user's own name still resolves.
+      // Build a lookup of user id -> display name so transactions can
+      // show the creator's name instead of the raw user id.
       const userMap = {}
       try {
-        if (user && user.role === 'admin') {
-          const users = await getUsers()
-          ;(users || []).forEach((u) => {
-            userMap[u.id] = u.name
-          })
-        }
+        const users = await getUserLookup()
+        ;(users || []).forEach((u) => {
+          userMap[u.id] = u.name
+        })
       } catch {
-        /* ignore — non-admins just get the current user below */
+        /* ignore — fall back to current user only below */
       }
       if (user) userMap[user.id] = user.name
       userMapRef.current = userMap
@@ -112,15 +127,69 @@ export function DataProvider({ children }) {
       setExpenses((rawExpenses || []).map((e) => dbToExpense(e, registerMap, userMap)))
       setPayments((rawPayments || []).map((pm) => dbToPayment(pm, registerMap, userMap)))
       setApprovals((rawApprovals || []).map((a) => dbToApproval(a)))
+      setLastSynced(new Date())
     } catch (err) {
       setError(err.message)
     } finally {
       setLoaded(true)
+      isRefreshingRef.current = false
     }
   }, [user])
 
   useEffect(() => {
     refreshData()
+  }, [refreshData])
+
+  // Listen for BroadcastChannel messages from other tabs for instant
+  // same-browser sync, and fall back to polling every 3 seconds for
+  // cross-device updates.
+  useEffect(() => {
+    if (!getToken()) return
+
+    let channel
+    try {
+      channel = new BroadcastChannel('importbiz-sync')
+      channel.onmessage = () => {
+        refreshData()
+      }
+      broadcastRef.current = channel
+    } catch {
+      // BroadcastChannel not supported; polling only.
+    }
+
+    const startPolling = () => {
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current)
+      pollTimerRef.current = setInterval(() => {
+        refreshData()
+      }, 3000)
+    }
+
+    const stopPolling = () => {
+      if (pollTimerRef.current) {
+        clearInterval(pollTimerRef.current)
+        pollTimerRef.current = null
+      }
+    }
+
+    if (document.visibilityState === 'visible') {
+      startPolling()
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        refreshData()
+        startPolling()
+      } else {
+        stopPolling()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      stopPolling()
+      if (channel) channel.close()
+    }
   }, [refreshData])
 
   // --- Helpers that mutate the relevant slice from an API response ----
@@ -134,6 +203,7 @@ export function DataProvider({ children }) {
     async (data) => {
       const res = await svcCreateRegister(registerToDb(data))
       appendTo(setRegisters, dbToRegister(res, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -143,6 +213,7 @@ export function DataProvider({ children }) {
     async (id, patch) => {
       const res = await svcUpdateRegister(id, toDbPatch(patch, REGISTER_DB_MAP))
       replaceIn(setRegisters, dbToRegister(res, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -153,6 +224,7 @@ export function DataProvider({ children }) {
     async (data) => {
       const res = await svcCreatePurchase(purchaseToDb(data))
       appendTo(setPurchases, dbToPurchase(res, registerMapRef.current, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -162,6 +234,7 @@ export function DataProvider({ children }) {
     async (id, patch) => {
       const res = await svcUpdatePurchase(id, toDbPatch(patch, PURCHASE_DB_MAP))
       replaceIn(setPurchases, dbToPurchase(res, registerMapRef.current, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -172,6 +245,7 @@ export function DataProvider({ children }) {
     async (data) => {
       const res = await svcCreateSale(saleToDb(data))
       appendTo(setSales, dbToSale(res, registerMapRef.current, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -181,6 +255,7 @@ export function DataProvider({ children }) {
     async (id, patch) => {
       const res = await svcUpdateSale(id, toDbPatch(patch, SALE_DB_MAP))
       replaceIn(setSales, dbToSale(res, registerMapRef.current, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -191,6 +266,7 @@ export function DataProvider({ children }) {
     async (data) => {
       const res = await svcCreateExpense(expenseToDb(data))
       appendTo(setExpenses, dbToExpense(res, registerMapRef.current, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -200,6 +276,7 @@ export function DataProvider({ children }) {
     async (id, patch) => {
       const res = await svcUpdateExpense(id, toDbPatch(patch, EXPENSE_DB_MAP))
       replaceIn(setExpenses, dbToExpense(res, registerMapRef.current, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -210,6 +287,7 @@ export function DataProvider({ children }) {
     async (data) => {
       const res = await svcCreatePayment(paymentToDb(data))
       appendTo(setPayments, dbToPayment(res, registerMapRef.current, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -219,6 +297,7 @@ export function DataProvider({ children }) {
     async (id, patch) => {
       const res = await svcUpdatePayment(id, toDbPatch(patch, PAYMENT_DB_MAP))
       replaceIn(setPayments, dbToPayment(res, registerMapRef.current, userMapRef.current))
+      broadcastRefresh()
       return res
     },
     []
@@ -243,6 +322,7 @@ export function DataProvider({ children }) {
       }
       // Keep the pending-approvals badge/count in sync.
       setApprovals((prev) => prev.filter((a) => a.id !== id))
+      broadcastRefresh()
       return res
     },
     []
@@ -263,6 +343,7 @@ export function DataProvider({ children }) {
         replaceIn(setPayments, dbToPayment(res, registerMapRef.current, userMapRef.current))
       }
       setApprovals((prev) => prev.filter((a) => a.id !== id))
+      broadcastRefresh()
       return res
     },
     []
@@ -279,6 +360,7 @@ export function DataProvider({ children }) {
         approvals,
         loaded,
         error,
+        lastSynced,
         refreshData,
         createRegister,
         updateRegister,
@@ -287,7 +369,6 @@ export function DataProvider({ children }) {
         createSale,
         updateSale,
         createExpense,
-        updateExpense,
         createPayment,
         updatePayment,
         approveItem,

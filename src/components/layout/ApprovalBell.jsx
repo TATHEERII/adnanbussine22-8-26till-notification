@@ -1,10 +1,11 @@
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import Badge from '../ui/Badge'
 import Button from '../ui/Button'
 import Input from '../ui/Input'
 import Modal from '../ui/Modal'
 import { useData } from '../../context/DataContext'
+import { getNotifications, markNotificationsRead } from '../../services/notifications'
 import './ApprovalBell.css'
 
 const typeIcons = {
@@ -46,6 +47,26 @@ const getReferenceNumber = (item) => {
   }
 }
 
+function findTransaction(lists, entityType, id) {
+  const key = entityType
+  if (key === 'register') {
+    return (lists.registers || []).find((r) => r.id === id) || null
+  }
+  if (key === 'purchase') {
+    return (lists.purchases || []).find((p) => p.id === id) || null
+  }
+  if (key === 'sale') {
+    return (lists.sales || []).find((s) => s.id === id) || null
+  }
+  if (key === 'expense') {
+    return (lists.expenses || []).find((e) => e.id === id) || null
+  }
+  if (key === 'payment') {
+    return (lists.payments || []).find((p) => p.id === id) || null
+  }
+  return null
+}
+
 export default function ApprovalBell({ user }) {
   const navigate = useNavigate()
   const [showDropdown, setShowDropdown] = useState(false)
@@ -53,8 +74,14 @@ export default function ApprovalBell({ user }) {
   const [showDetailModal, setShowDetailModal] = useState(false)
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
+  const [notifications, setNotifications] = useState([])
+  const [selectedNotification, setSelectedNotification] = useState(null)
+  const [showNotifDetailModal, setShowNotifDetailModal] = useState(false)
 
-  const { registers, purchases, sales, expenses, payments, approveItem, rejectItem } = useData()
+  const { registers, purchases, sales, expenses, payments, approveItem, rejectItem, refreshData } = useData()
+  const notifTimerRef = useRef(null)
+  const broadcastRef = useRef(null)
+  const pendingDismissRef = useRef(new Set())
 
   const pendingItems = useMemo(() => {
     const items = []
@@ -91,6 +118,163 @@ export default function ApprovalBell({ user }) {
     return items.sort((a, b) => new Date(b.date) - new Date(a.date))
   }, [registers, purchases, sales, expenses, payments, user?.id])
 
+  const fetchNotifications = async () => {
+    try {
+      const data = await getNotifications({ unread: true })
+      const filtered = (data || []).filter((n) => !pendingDismissRef.current.has(n.id))
+      setNotifications(filtered)
+    } catch (err) {
+      console.error('Failed to fetch notifications', err)
+    }
+  }
+
+  const broadcastRefresh = () => {
+    try {
+      if (!broadcastRef.current) {
+        broadcastRef.current = new BroadcastChannel('importbiz-sync')
+      }
+      broadcastRef.current.postMessage({ type: 'refresh' })
+    } catch {
+      // BroadcastChannel not supported
+    }
+  }
+
+  const dismissNotification = async (notif) => {
+    const id = notif.id
+    pendingDismissRef.current.add(id)
+    setNotifications((prev) => prev.filter((n) => n.id !== id))
+
+    try {
+      await markNotificationsRead([id])
+    } catch (err) {
+      console.error('Failed to dismiss notification', err)
+    } finally {
+      pendingDismissRef.current.delete(id)
+    }
+  }
+
+  const handleNotificationClick = async (notif) => {
+    setSelectedNotification(notif)
+    setShowNotifDetailModal(true)
+    await dismissNotification(notif)
+  }
+
+  const handleClearAllNotifications = async () => {
+    try {
+      const ids = notifications.map((n) => n.id)
+      if (ids.length === 0) return
+      ids.forEach((id) => pendingDismissRef.current.add(id))
+      await markNotificationsRead(ids)
+      setNotifications([])
+    } catch (err) {
+      console.error('Failed to clear notifications', err)
+      alert(err.message || 'Failed to clear notifications')
+    } finally {
+      ids.forEach((id) => pendingDismissRef.current.delete(id))
+    }
+  }
+
+  // Listen for BroadcastChannel messages for instant same-browser sync.
+  useEffect(() => {
+    let channel
+    try {
+      channel = new BroadcastChannel('importbiz-sync')
+      channel.onmessage = () => {
+        refreshData()
+        fetchNotifications()
+      }
+      broadcastRef.current = channel
+    } catch {
+      // BroadcastChannel not supported
+    }
+    return () => {
+      if (channel) channel.close()
+    }
+  }, [refreshData])
+
+  // Poll notifications every 2 seconds for near-real-time updates.
+  useEffect(() => {
+    const startPolling = () => {
+      if (notifTimerRef.current) clearInterval(notifTimerRef.current)
+      notifTimerRef.current = setInterval(() => {
+        fetchNotifications()
+      }, 2000)
+    }
+
+    const stopPolling = () => {
+      if (notifTimerRef.current) {
+        clearInterval(notifTimerRef.current)
+        notifTimerRef.current = null
+      }
+    }
+
+    if (document.visibilityState === 'visible') {
+      startPolling()
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications()
+        startPolling()
+      } else {
+        stopPolling()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      stopPolling()
+    }
+  }, [])
+
+  // Pause notification polling while a notification detail modal is open
+  // to avoid race conditions between local optimistic removal and server sync.
+  useEffect(() => {
+    if (showNotifDetailModal) {
+      if (notifTimerRef.current) {
+        clearInterval(notifTimerRef.current)
+        notifTimerRef.current = null
+      }
+      return
+    }
+
+    if (document.visibilityState === 'visible') {
+      if (notifTimerRef.current) clearInterval(notifTimerRef.current)
+      notifTimerRef.current = setInterval(() => {
+        fetchNotifications()
+      }, 2000)
+    }
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchNotifications()
+        if (notifTimerRef.current) clearInterval(notifTimerRef.current)
+        notifTimerRef.current = setInterval(() => {
+          fetchNotifications()
+        }, 2000)
+      } else {
+        if (notifTimerRef.current) {
+          clearInterval(notifTimerRef.current)
+          notifTimerRef.current = null
+        }
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibility)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility)
+      if (notifTimerRef.current) {
+        clearInterval(notifTimerRef.current)
+        notifTimerRef.current = null
+      }
+    }
+  }, [showNotifDetailModal])
+
+  useEffect(() => {
+    fetchNotifications()
+  }, [])
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (!event.target.closest('.approval-bell-container')) {
@@ -120,8 +304,10 @@ export default function ApprovalBell({ user }) {
 
     try {
       await approveItem(item.type, item.id)
+      broadcastRefresh()
       setShowDetailModal(false)
       setSelectedItem(null)
+      fetchNotifications()
     } catch (err) {
       alert(err.message || 'Failed to approve request')
     }
@@ -133,10 +319,12 @@ export default function ApprovalBell({ user }) {
 
     try {
       await rejectItem(item.type, item.id, rejectionReason.trim())
+      broadcastRefresh()
       setRejectionReason('')
       setShowRejectModal(false)
       setShowDetailModal(false)
       setSelectedItem(null)
+      fetchNotifications()
     } catch (err) {
       alert(err.message || 'Failed to reject request')
     }
@@ -194,6 +382,19 @@ export default function ApprovalBell({ user }) {
     return `${symbol}${num.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
+  const notificationEntityType = selectedNotification?.type?.startsWith('approval_')
+    ? selectedNotification.type.replace('approval_', '')
+    : null
+
+  const notifTransaction = useMemo(() => {
+    if (!selectedNotification || !notificationEntityType) return null
+    return findTransaction(
+      { registers, purchases, sales, expenses, payments },
+      notificationEntityType,
+      selectedNotification.reference
+    )
+  }, [selectedNotification, notificationEntityType, registers, purchases, sales, expenses, payments])
+
   return (
     <div className="approval-bell-container">
       <button
@@ -208,17 +409,57 @@ export default function ApprovalBell({ user }) {
             {pendingItems.length > 99 ? '99+' : pendingItems.length}
           </span>
         )}
+        {notifications.length > 0 && pendingItems.length === 0 && (
+          <span className="approval-bell-badge approval-bell-badge-notif">
+            {notifications.length > 99 ? '99+' : notifications.length}
+          </span>
+        )}
       </button>
 
       {showDropdown && (
         <div className="approval-bell-dropdown">
           <div className="approval-bell-header">
-            <h3>Pending Approvals</h3>
-            <Badge variant="warning">{pendingItems.length}</Badge>
+            <h3>Notifications</h3>
+            {notifications.length > 0 && (
+              <button
+                type="button"
+                className="approval-bell-clear-all"
+                onClick={handleClearAllNotifications}
+              >
+                Clear all
+              </button>
+            )}
           </div>
 
+          {notifications.length > 0 && (
+            <div className="approval-bell-notifications">
+              {notifications.slice(0, 8).map((notif) => (
+                <button
+                  key={notif.id}
+                  type="button"
+                  className="approval-bell-notification-item"
+                  onClick={() => handleNotificationClick(notif)}
+                >
+                  <span className="approval-bell-notification-icon">🔔</span>
+                  <span className="approval-bell-notification-text">{notif.message}</span>
+                  <span
+                    className="approval-bell-notification-dismiss"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      dismissNotification(notif)
+                    }}
+                  >
+                    ×
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <div className="approval-bell-list">
-            {pendingItems.length === 0 ? (
+            {pendingItems.length === 0 && notifications.length === 0 ? (
+              <div className="approval-bell-empty">No pending approvals or notifications</div>
+            ) : pendingItems.length === 0 ? (
               <div className="approval-bell-empty">No pending approvals</div>
             ) : (
               pendingItems.slice(0, 8).map((item) => (
@@ -317,6 +558,54 @@ export default function ApprovalBell({ user }) {
               <Button variant="secondary" onClick={() => { setShowDetailModal(false); setSelectedItem(null); }}>Close</Button>
               <Button onClick={() => handleApprove(selectedItem)}>Approve</Button>
               <Button variant="danger" onClick={openReject}>Reject</Button>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal open={showNotifDetailModal} onClose={() => { setShowNotifDetailModal(false); setSelectedNotification(null); }} title="Notification Details">
+        {selectedNotification && (
+          <div className="approval-bell-details">
+            <div className="approval-bell-detail-row">
+              <span className="approval-bell-detail-label">Message</span>
+              <span className="approval-bell-detail-value">{selectedNotification.message}</span>
+            </div>
+            <div className="approval-bell-detail-row">
+              <span className="approval-bell-detail-label">Type</span>
+              <span className="approval-bell-detail-value">{notificationEntityType ? typeLabels[notificationEntityType] || notificationEntityType : selectedNotification.type}</span>
+            </div>
+            <div className="approval-bell-detail-row">
+              <span className="approval-bell-detail-label">Reference</span>
+              <span className="approval-bell-detail-value">{selectedNotification.reference || '-'}</span>
+            </div>
+            <div className="approval-bell-detail-row">
+              <span className="approval-bell-detail-label">Status</span>
+              <span className="approval-bell-detail-value">
+                <Badge variant={notifTransaction?.status === 'approved' ? 'success' : notifTransaction?.status === 'rejected' ? 'danger' : 'warning'}>
+                  {notifTransaction?.status || 'Updated'}
+                </Badge>
+              </span>
+            </div>
+            {notifTransaction && (
+              <>
+                <div className="approval-bell-detail-row">
+                  <span className="approval-bell-detail-label">Date</span>
+                  <span className="approval-bell-detail-value">{formatDate(notifTransaction.date || notifTransaction.createdAt)}</span>
+                </div>
+                {notifTransaction.amount && (
+                  <div className="approval-bell-detail-row">
+                    <span className="approval-bell-detail-label">Amount</span>
+                    <span className="approval-bell-detail-value">{formatCurrency(notifTransaction.amount)}</span>
+                  </div>
+                )}
+                <div className="approval-bell-detail-row">
+                  <span className="approval-bell-detail-label">Description</span>
+                  <span className="approval-bell-detail-value">{getDescription(notifTransaction) || '-'}</span>
+                </div>
+              </>
+            )}
+            <div className="approval-bell-modal-actions">
+              <Button variant="secondary" onClick={() => { setShowNotifDetailModal(false); setSelectedNotification(null); }}>Close</Button>
             </div>
           </div>
         )}

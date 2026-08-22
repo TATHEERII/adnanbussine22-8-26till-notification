@@ -146,8 +146,8 @@ export default function Sales() {
     setFormData({
       date: sale.date,
       registerId: sale.registerId,
-      customerName: sale.customerName,
-      description: sale.description,
+      customerName: sale.customerName || '',
+      description: sale.description || '',
       amount: String(sale.amount || 0),
       paymentStatus: sale.paymentStatus,
       notes: sale.notes || '',
@@ -170,6 +170,12 @@ export default function Sales() {
         paymentStatus: formData.paymentStatus,
         notes: formData.notes.trim(),
       })
+
+      // If this was a rejected sale, resubmit it for approval after updating.
+      if (selectedSale.status === 'rejected') {
+        await updateSale(selectedSale.id, { status: 'pending' })
+      }
+
       resetForm()
       setSelectedSale(null)
       setShowCreateModal(false)
