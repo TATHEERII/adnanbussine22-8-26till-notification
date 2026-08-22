@@ -369,6 +369,7 @@ export function DataProvider({ children }) {
         createSale,
         updateSale,
         createExpense,
+        updateExpense,
         createPayment,
         updatePayment,
         approveItem,
